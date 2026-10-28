@@ -134,12 +134,13 @@ html[lang="si"] .card h3{text-transform:none;font-size:17px}
 /* home */
 .hero{height:min(62vh,560px)}
 .carousel{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory}
-.pcard{scroll-snap-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;text-align:left;padding:0;display:grid;box-shadow:var(--shadow)}
+.pcard{scroll-snap-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;text-align:left;padding:0;display:flex;flex-direction:column;align-items:stretch;box-shadow:var(--shadow);min-width:0}
 .pcard.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft),var(--shadow)}
-.pcard .th{height:150px;background-color:var(--paper);background-image:repeating-linear-gradient(30deg,var(--grid) 0 1px,transparent 1px 18px),repeating-linear-gradient(-30deg,var(--grid) 0 1px,transparent 1px 18px);position:relative;display:grid;place-items:center}
-.pcard .th img{width:100%;height:100%;object-fit:contain}
+.pcard .th{height:150px;background-color:var(--paper);background-image:repeating-linear-gradient(30deg,var(--grid) 0 1px,transparent 1px 18px),repeating-linear-gradient(-30deg,var(--grid) 0 1px,transparent 1px 18px);position:relative;display:grid;place-items:center;flex:none;overflow:hidden;border-bottom:1px solid var(--line)}
+.pcard .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
 .pcard .th .ring{position:absolute;right:10px;top:10px;width:30px;height:30px}
-.pcard .bd{padding:10px 14px 14px;display:grid;gap:4px}
+.pcard .bd{padding:12px 14px 14px;display:grid;gap:4px;align-content:start;flex:1;min-width:0}
+.pcard .nm{overflow-wrap:anywhere}
 .pcard .no{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;color:var(--accent)}
 .pcard .nm{font-family:var(--f-disp);font-weight:700;font-size:18px;line-height:1.15;text-transform:uppercase}
 html[lang="si"] .pcard .nm{text-transform:none;font-size:15px;font-family:var(--f-body)}
@@ -300,3 +301,11 @@ body[data-view="lab"] .status{display:none}
 .fld{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--ink2)}
 .fld input,input.date{padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:15px}
 .auth{max-width:480px}
+
+/* mobile: keep hero button and toolbar apart */
+@media (max-width:760px){
+  .stage[data-mode="hero"] .tools{left:auto;right:12px;top:auto;bottom:14px;transform:none;flex-direction:column;padding:4px}
+  .stage[data-mode="hero"] .tools .dv{width:26px;height:1px;margin:3px 0}
+  .stage[data-mode="hero"] .tools button{width:38px;height:34px}
+  .hero-cta{left:12px;bottom:14px}
+}

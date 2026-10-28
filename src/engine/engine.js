@@ -453,6 +453,7 @@ export function createEngine() {
 
   /* ---------- rigs, camera, labels ---------- */
   const RIGS = {};
+  let thumbAspect = 0;
   let labG = null, camHome = null, camAnim = null, anim = null, lastTouch = 0, lastSpec = null;
   if (E.ok) { base = buildBase(); scene.add(base); labG = new THREE.Group(); scene.add(labG); }
   const getRig = (t) => RIGS[t] || (RIGS[t] = t === 'caliper' ? makeCaliper() : t === 'micro' ? makeMicro() : makeSphero());
@@ -466,8 +467,9 @@ export function createEngine() {
     camera.position.copy(target).addScaledVector(camDir(az), 80); camera.lookAt(target); camera.updateMatrixWorld(true);
     const inv = camera.matrixWorldInverse; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const p = new THREE.Vector3();
     for (let i = 0; i < 8; i++) { p.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(inv); x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
-    const a = root.clientWidth / Math.max(1, root.clientHeight); const padY = E.mode === 'hero' ? 0.72 : 0.62;
-    return Math.min(((2 * VIEW.H * a) / (x1 - x0)) * 0.86, ((2 * VIEW.H) / (y1 - y0)) * padY);
+    const a = thumbAspect || root.clientWidth / Math.max(1, root.clientHeight); const hero = E.mode === 'hero';
+    const padY = thumbAspect ? 0.82 : hero ? 0.58 : 0.62, padX = thumbAspect ? 0.88 : hero ? 0.74 : 0.86;
+    return Math.min(((2 * VIEW.H * a) / (x1 - x0)) * padX, ((2 * VIEW.H) / (y1 - y0)) * padY);
   }
   function settle() {
     if (!E.ok) return; const rig = E.rig;
@@ -505,13 +507,13 @@ export function createEngine() {
       const vis = _v.x > -1.05 && _v.x < 1.05 && _v.y > -1.05 && _v.y < 1.05; l.el.classList.toggle('hidden', !vis);
       if (vis) {
         let x = ((_v.x + 1) / 2) * w; const y = ((1 - _v.y) / 2) * h, ew = l.el.offsetWidth || 120;
-        const flip = x + ew > w - 8; l.el.classList.toggle('flip', flip); if (flip) x = x - ew + 16;
+        const flip = x + ew > w - (w < 760 ? 64 : 8); l.el.classList.toggle('flip', flip); if (flip) x = x - ew + 16;
         l.el.style.transform = `translate(${x}px,${y}px) translateY(-50%)`; pos.push({ l, x, y, w: ew });
       }
     }
     pos.sort((a, b) => a.y - b.y); const placed = [];
     for (const p of pos) {
-      let dy = 0;
+      let dy = Math.max(0, 62 - p.y);
       for (let k = 0; k < 8; k++) { const top = p.y + dy - 15, bot = p.y + dy + 15; const hit = placed.find((q) => p.x < q.x + q.w && p.x + p.w > q.x && top < q.b && bot > q.t); if (!hit) break; dy = hit.b - p.y + 16; }
       placed.push({ x: p.x, w: p.w, t: p.y + dy - 15, b: p.y + dy + 15 });
       p.l.el.lastChild.style.transform = dy ? `translateY(${dy}px)` : '';
@@ -540,14 +542,17 @@ export function createEngine() {
   E.attach = (el) => { if (root.parentNode !== el) el.appendChild(root); resize(); if (lastSpec && E.ok) settle(); };
   E.thumbnails = () => {
     if (!E.ok) return {}; const out = {}; const keepMode = E.mode, keep = lastSpec; E.setMode('hero');
+    const TW = 520, TH = 320; thumbAspect = TW / TH;
+    const pr = renderer.getPixelRatio(); renderer.setPixelRatio(1); renderer.setSize(TW, TH, false);
+    camera.left = -VIEW.H * thumbAspect; camera.right = VIEW.H * thumbAspect; camera.top = VIEW.H; camera.bottom = -VIEW.H; camera.updateProjectionMatrix();
     for (const t of ['caliper', 'micro', 'sphero']) {
       const R = useRig(t); R.place(t === 'sphero' ? { surf: 'flat', mode: 'show' } : { mode: 'show' }); settle(); controls.update(); renderer.render(scene, camera);
       try { out[t] = renderer.domElement.toDataURL('image/png'); } catch (e) { /* ignore */ }
     }
+    thumbAspect = 0; renderer.setPixelRatio(pr); resize();
     E.setMode(keepMode); if (keep) E.show(keep);
     return out;
   };
-
   function resize() {
     if (!E.ok) return; const w = root.clientWidth, h = root.clientHeight; if (!w || !h) return;
     renderer.setSize(w, h, false); const a = w / h;
