@@ -1,5 +1,7 @@
 # Learn Physics Lab
 
+Learn physics practical by using 3D.
+
 Interactive 3D practicals for G.C.E. (A/L) Physics, following the NIE *Practical Handbook*, in **Sinhala and English**, with a class community for students and teachers.
 
 - **3D practicals (01–03):** vernier caliper, micrometer screw gauge, spherometer. Each follows the handbook sections: apparatus → theory → procedure → readings and calculations → results.
