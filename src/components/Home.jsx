@@ -59,7 +59,7 @@ export default function Home({ go }) {
         <div className="card">
           <h3>{u('assignments')}</h3>
           {!comm.uid ? <div className="empty">{u('signInToJoin')}</div>
-            : comm.assignments.length ? comm.assignments.slice(0, 4).map((a) => <AssignmentRow key={a.id} a={a} />)
+            : comm.assignments.length ? comm.assignments.slice(0, 4).map((a) => <AssignmentRow key={a.id} a={a} onOpen={() => { comm.setFocus(a.id); go('comm'); }} />)
               : <div className="empty">{u('noAssign')}</div>}
         </div>
         <div className="card">

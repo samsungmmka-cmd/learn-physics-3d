@@ -1,120 +1,90 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from './supabase.js';
+import * as API from './api.js';
 import { useLab } from './labStore.jsx';
 import { progress } from './calc.js';
 import { LABS } from '../data/content.js';
 
 const Ctx = createContext(null);
+const POLL_MS = 30000;
 
 export function CommunityProvider({ children }) {
-  const { st, replace } = useLab();
-  const [session, setSession] = useState(null);
-  const [ready, setReady] = useState(!supabase);
-  const [me, setMe] = useState(null);
-  const [profiles, setProfiles] = useState({});
+  const { st } = useLab();
+  const [enabled, setEnabled] = useState(true);
+  const [ready, setReady] = useState(false);
+  const [session, setSessionState] = useState(API.getSession());
   const [posts, setPosts] = useState([]);
   const [results, setResults] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [classProgress, setClassProgress] = useState([]);
-  const [online, setOnline] = useState(0);
-  const uid = session?.user?.id || null;
+  const [focus, setFocus] = useState(null); // assignment id opened in the Community view
+  const me = session?.user || null;
+  const uid = me?.id || null;
   const teacher = me?.role === 'teacher';
 
+  useEffect(() => API.onSession(setSessionState), []);
   useEffect(() => {
-    if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    API.health().then((h) => setEnabled(!!h?.configured)).catch(() => setEnabled(false)).finally(() => setReady(true));
   }, []);
 
+  // names/roles of everyone we have seen, taken from what the API returns
+  const profiles = useMemo(() => {
+    const m = {};
+    posts.forEach((p) => { m[p.author] = { name: p.author_name, role: p.author_role }; });
+    classProgress.forEach((r) => { m[r.user_id] = { name: r.name, role: r.role }; });
+    if (me) m[me.id] = { name: me.name, role: me.role };
+    return m;
+  }, [posts, classProgress, me]);
+
   const loadAll = useCallback(async () => {
-    if (!supabase || !uid) return;
-    const [pr, po, re, as] = await Promise.all([
-      supabase.from('profiles').select('id,name,role'),
-      supabase.from('posts').select('id,author,prac,body,parent,created_at').order('created_at', { ascending: false }).limit(300),
-      supabase.from('results').select('user_id,prac,vals,updated_at'),
-      supabase.from('assignments').select('id,prac,due,note,created_by,created_at').order('created_at', { ascending: false }).limit(50),
-    ]);
-    if (pr.data) {
-      const m = {}; pr.data.forEach((p) => { m[p.id] = p; });
-      if (!m[uid]) { // account created before the profile trigger existed
-        const nm = (session?.user?.user_metadata?.name || '').slice(0, 60);
-        const ins = await supabase.from('profiles').insert({ id: uid, name: nm }).select('id,name,role').single();
-        if (ins.data) m[uid] = ins.data;
-      }
-      setProfiles(m); setMe(m[uid] || null);
-    }
-    if (po.data) setPosts(po.data);
-    if (re.data) setResults(re.data);
-    if (as.data) setAssignments(as.data);
-    const cp = await supabase.from('progress').select('user_id,prog,updated_at');
-    if (cp.data) setClassProgress(cp.data);
-  }, [uid]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!uid) return;
+    const [po, re, as, pr] = await Promise.allSettled([API.api('GET', '/posts'), API.api('GET', '/results'), API.api('GET', '/assignments'), API.api('GET', '/progress')]);
+    if (po.status === 'fulfilled') setPosts(po.value.posts);
+    if (re.status === 'fulfilled') setResults(re.value.results);
+    if (as.status === 'fulfilled') setAssignments(as.value.assignments);
+    if (pr.status === 'fulfilled') setClassProgress(pr.value.scope === 'class' ? pr.value.progress : []);
+  }, [uid]);
 
-  // initial load, realtime refresh, presence
   useEffect(() => {
-    if (!supabase || !uid) return undefined;
+    if (!uid || !enabled) { setPosts([]); setResults([]); setAssignments([]); setClassProgress([]); return undefined; }
     loadAll();
-    let t = null; const soon = () => { clearTimeout(t); t = setTimeout(loadAll, 300); };
-    const ch = supabase.channel('class-data')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, soon)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'results' }, soon)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, soon)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, soon)
-      .subscribe();
-    const pres = supabase.channel('lab-presence', { config: { presence: { key: uid } } });
-    pres.on('presence', { event: 'sync' }, () => setOnline(Object.keys(pres.presenceState()).length))
-      .subscribe((s) => { if (s === 'SUBSCRIBED') pres.track({ at: Date.now() }); });
-    return () => { clearTimeout(t); supabase.removeChannel(ch); supabase.removeChannel(pres); };
-  }, [uid, loadAll]);
+    API.api('GET', '/auth/me').then((u) => API.saveUser(u)).catch(() => {});
+    const t = setInterval(() => { if (document.visibilityState === 'visible') loadAll(); }, POLL_MS);
+    return () => clearInterval(t);
+  }, [uid, enabled, loadAll]);
 
-  // restore lab work from the account on sign-in, if it is newer than this device's copy
-  const restored = useRef(null);
-  useEffect(() => {
-    if (!supabase || !uid || restored.current === uid) return;
-    restored.current = uid;
-    supabase.from('lab_state').select('state,updated_at').eq('user_id', uid).maybeSingle().then(({ data }) => {
-      if (data && data.state && data.state.labs && (data.state.ts || 0) > (st.ts || 0)) replace({ ...data.state, view: st.view });
-    });
-  }, [uid]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // save lab work + progress (debounced, only when lab data changed)
+  // save practical progress to the account (debounced, only when lab data changed)
   const lastTs = useRef(null);
   useEffect(() => {
-    if (!supabase || !uid || !st.ts || st.ts === lastTs.current) return undefined;
-    const t = setTimeout(async () => {
+    if (!uid || !enabled || !st.ts || st.ts === lastTs.current) return undefined;
+    const t = setTimeout(() => {
       lastTs.current = st.ts;
       const prog = {}; Object.keys(LABS).forEach((id) => { prog[id] = Math.round(progress(st, +id) * 100); });
-      await supabase.from('lab_state').upsert({ user_id: uid, state: st, updated_at: new Date().toISOString() });
-      await supabase.from('progress').upsert({ user_id: uid, prog, updated_at: new Date().toISOString() });
+      API.api('PUT', '/progress', { prog }).catch(() => {});
     }, 2500);
     return () => clearTimeout(t);
-  }, [st, uid]);
+  }, [st, uid, enabled]);
 
-  const api = useMemo(() => ({
-    enabled: !!supabase, ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, online,
-    async signIn(email, name) {
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin, data: { name } } });
-      return error;
-    },
-    async signOut() { await supabase.auth.signOut(); setMe(null); },
-    async rename(name) { const { error } = await supabase.from('profiles').update({ name }).eq('id', uid); if (!error) loadAll(); return error; },
-    async addPost(body, prac, parent) {
-      const { error } = await supabase.from('posts').insert({ body: body.trim().slice(0, 2000), prac: prac || 0, parent: parent || null });
-      if (!error) loadAll(); return error;
-    },
-    async delPost(id) { const { error } = await supabase.from('posts').delete().eq('id', id); if (!error) loadAll(); return error; },
-    async shareResult(prac, vals) {
-      const { error } = await supabase.from('results').upsert({ user_id: uid, prac, vals, updated_at: new Date().toISOString() });
-      if (!error) loadAll(); return error;
-    },
-    async addAssignment(prac, due, note) {
-      const { error } = await supabase.from('assignments').insert({ prac, due: due || null, note: note.trim().slice(0, 400) });
-      if (!error) loadAll(); return error;
-    },
-    async delAssignment(id) { const { error } = await supabase.from('assignments').delete().eq('id', id); if (!error) loadAll(); return error; },
-  }), [ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, online, loadAll]);
+  const wrap = (fn) => async (...a) => { try { await fn(...a); loadAll(); return null; } catch (e) { return e; } };
 
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  const value = useMemo(() => ({
+    enabled, ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, online: 0, reload: loadAll, focus, setFocus,
+    signUp: async (form) => { try { const d = await API.signUp(form); return { ok: true, needsConfirmation: !!d.needsConfirmation }; } catch (e) { return { error: e }; } },
+    signIn: async (email, password) => { try { await API.signIn(email, password); return null; } catch (e) { return e; } },
+    signOut: () => API.signOut(),
+    rename: wrap(async (name) => { const u = await API.api('PATCH', '/auth/me', { name }); API.saveUser(u); }),
+    addPost: wrap((body, prac, parent) => API.api('POST', '/posts', { body, prac: prac || 0, parent: parent || null })),
+    delPost: wrap((id) => API.api('DELETE', `/posts/${id}`)),
+    shareResult: wrap((prac, vals) => API.api('PUT', '/results', { prac, vals })),
+    addAssignment: wrap((a) => API.api('POST', '/assignments', a)),
+    delAssignment: wrap((id) => API.api('DELETE', `/assignments/${id}`)),
+    enroll: wrap((id) => API.api('POST', `/assignments/${id}/enroll`)),
+    leave: wrap((id) => API.api('DELETE', `/assignments/${id}/enroll`)),
+    complete: wrap((id, note, done = true) => API.api('POST', `/assignments/${id}/complete`, { note, done })),
+    getAssignment: (id) => API.api('GET', `/assignments/${id}`),
+    addComment: (id, body) => API.api('POST', `/assignments/${id}/comments`, { body }),
+    delComment: (id) => API.api('DELETE', `/comments/${id}`),
+  }), [enabled, ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, focus, loadAll]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export const useCommunity = () => useContext(Ctx);

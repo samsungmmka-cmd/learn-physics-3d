@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useT } from '../lib/i18n.jsx';
 import { useLab } from '../lib/labStore.jsx';
 import { useCommunity } from '../lib/community.jsx';
@@ -50,36 +50,67 @@ export function PostItem({ p, compact, onReply, children }) {
   );
 }
 
-export function AssignmentRow({ a, withDelete }) {
-  const { u, lang } = useT(); const { update } = useLab(); const comm = useCommunity(); const ago = useAgo();
-  const open = () => update((n) => { n.cur = a.prac; n.sec = 2; n.view = 'lab'; }, true);
+export function AssignmentRow({ a, onOpen }) {
+  const { u, lang } = useT(); const comm = useCommunity();
+  const title = a.title || pracTitle(a.prac, lang);
+  const st = a.my_status === 'completed' ? u('stCompleted') : a.my_status === 'enrolled' ? u('stEnrolled') : '';
+  const counts = comm.teacher && a.enrolled_count !== undefined ? `${a.enrolled_count} ${u('enrolledN')} · ${a.completed_count} ${u('completedN')}` : '';
+  const open = onOpen || (() => comm.setFocus(a.id));
   return (
     <div className="ai">
-      <span className="badgeN">{String(a.prac).padStart(2, '0')}</span>
-      <div><b>{pracTitle(a.prac, lang)}</b><small>{[a.due ? `${u('due')}: ${a.due}` : '', a.note || '', withDelete ? ago(a.created_at) : ''].filter(Boolean).join(' · ')}</small></div>
+      <span className="badgeN">{a.prac ? String(a.prac).padStart(2, '0') : '—'}</span>
+      <div><b>{title}</b><small>{[a.teacher_name ? `${u('by')} ${a.teacher_name}` : '', a.due ? `${u('due')}: ${a.due}` : '', counts].filter(Boolean).join(' · ')}</small></div>
       <div className="row">
-        <button type="button" className="btn sm ghost" onClick={open}>{u('open')}</button>
-        {withDelete && comm.teacher ? <button type="button" className="btn sm ghost" onClick={() => comm.delAssignment(a.id)}>{u('del')}</button> : null}
+        {st ? <span className={`stTag${a.my_status === 'completed' ? ' done' : ''}`}>{st}</span> : null}
+        <button type="button" className="btn sm ghost" onClick={open}>{u('details')}</button>
       </div>
     </div>
   );
 }
 
+function errText(e, u) {
+  if (!e) return '';
+  if (e.code === 'wrong_teacher_code') return u('wrongCode');
+  if (e.code === 'invalid_login') return u('badLogin');
+  if (e.code === 'network' || e.code === 'not_api' || e.status === 503) return u('netErr');
+  return e.message || u('postErr');
+}
+
 function AuthCard() {
   const { u } = useT(); const comm = useCommunity();
-  const [email, setEmail] = useState(''); const [name, setName] = useState(''); const [state, setState] = useState(null);
-  const send = async (e) => {
-    e.preventDefault(); if (!email.includes('@')) return;
-    setState('busy'); const err = await comm.signIn(email.trim(), name.trim().slice(0, 60)); setState(err ? 'err' : 'sent');
+  const [mode, setMode] = useState('in');
+  const [f, setF] = useState({ name: '', email: '', password: '', role: 'student', teacherCode: '' });
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const submit = async (e) => {
+    e.preventDefault(); setBusy(true); setMsg(null);
+    if (mode === 'in') { const err = await comm.signIn(f.email.trim(), f.password); if (err) setMsg(['bad', errText(err, u)]); }
+    else {
+      const r = await comm.signUp({ name: f.name.trim(), email: f.email.trim(), password: f.password, role: f.role, teacherCode: f.role === 'teacher' ? f.teacherCode.trim() : undefined });
+      if (r.error) setMsg(['bad', errText(r.error, u)]);
+      else if (r.needsConfirmation) { setMsg(['good', u('checkEmail')]); setMode('in'); }
+    }
+    setBusy(false);
   };
   return (
-    <form className="card auth" onSubmit={send}>
-      <h3>{u('joinClass')}</h3>
-      <p className="muted">{u('joinHelp')}</p>
-      <label className="fld"><span>{u('yourName')}</span><input id="authName" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="name" /></label>
-      <label className="fld"><span>{u('email')}</span><input id="authEmail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
-      <div className="row"><button className="btn" type="submit" disabled={state === 'busy'}>{u('sendLink')}</button></div>
-      {state === 'sent' ? <p className="fb good">{u('linkSent')}</p> : state === 'err' ? <p className="fb bad">{u('linkErr')}</p> : null}
+    <form className="card auth" onSubmit={submit}>
+      <div className="ctabs" role="tablist">
+        {[['in', u('signInTab')], ['up', u('signUpTab')]].map(([k, t]) => <button type="button" role="tab" key={k} className="chip" aria-selected={mode === k} aria-pressed={mode === k} onClick={() => { setMode(k); setMsg(null); }}>{t}</button>)}
+      </div>
+      <p className="muted">{u('authHelp')}</p>
+      {mode === 'up' ? <label className="fld"><span>{u('yourName')}</span><input required value={f.name} onChange={set('name')} maxLength={60} autoComplete="name" /></label> : null}
+      <label className="fld"><span>{u('email')}</span><input type="email" required value={f.email} onChange={set('email')} autoComplete="email" /></label>
+      <label className="fld"><span>{u('password')}</span><input type="password" required minLength={mode === 'up' ? 8 : 1} maxLength={72} value={f.password} onChange={set('password')} autoComplete={mode === 'up' ? 'new-password' : 'current-password'} />{mode === 'up' ? <small className="muted">{u('pwHelp')}</small> : null}</label>
+      {mode === 'up' ? (
+        <fieldset className="fld roles"><legend>{u('iAm')}</legend>
+          {[['student', u('roleStudent')], ['teacher', u('roleTeacher')]].map(([k, t]) => (
+            <label key={k} className={`roleOpt${f.role === k ? ' on' : ''}`}><input type="radio" name="role" value={k} checked={f.role === k} onChange={set('role')} />{t}</label>
+          ))}
+        </fieldset>
+      ) : null}
+      {mode === 'up' && f.role === 'teacher' ? <label className="fld"><span>{u('teacherCode')}</span><input required value={f.teacherCode} onChange={set('teacherCode')} autoComplete="off" /><small className="muted">{u('teacherCodeHelp')}</small></label> : null}
+      <div className="row"><button className="btn" type="submit" disabled={busy}>{mode === 'in' ? u('signInBtn') : u('createAcct')}</button></div>
+      {msg ? <p className={`fb ${msg[0]}`} role="status">{msg[1]}</p> : null}
     </form>
   );
 }
@@ -202,32 +233,107 @@ function ClassProgress() {
   );
 }
 
+function AssignmentDetail({ id, onBack }) {
+  const { u, lang } = useT(); const { update } = useLab(); const comm = useCommunity(); const ago = useAgo();
+  const [a, setA] = useState(null); const [err, setErr] = useState(''); const [note, setNote] = useState(''); const [text, setText] = useState(''); const [busy, setBusy] = useState(false); const [armed, setArmed] = useState(false);
+  const load = async () => { try { const d = await comm.getAssignment(id); setA(d); setNote(d.my_enrollment?.note || ''); setErr(''); } catch (e) { setErr(errText(e, u)); } };
+  useEffect(() => { load(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const act = async (fn) => { setBusy(true); const e = await fn(); setBusy(false); if (e) setErr(errText(e, u)); else load(); };
+  const comment = async (e) => { e.preventDefault(); if (!text.trim()) return; setBusy(true); try { await comm.addComment(id, text.trim()); setText(''); await load(); } catch (x) { setErr(errText(x, u)); } setBusy(false); };
+  const delC = async (cid) => { try { await comm.delComment(cid); load(); } catch (x) { setErr(errText(x, u)); } };
+  if (!a) return <div className="card"><button type="button" className="link" onClick={onBack}>← {u('back')}</button>{err ? <p className="fb bad">{err}</p> : <div className="empty">…</div>}</div>;
+  const mine = a.my_enrollment; const isAuthor = a.created_by === comm.uid;
+  return (
+    <div className="card adetail">
+      <button type="button" className="link" style={{ justifySelf: 'start' }} onClick={onBack}>← {u('back')}</button>
+      <div>
+        <h3 style={{ fontSize: 22 }}>{a.title}</h3>
+        <p className="muted">{[a.teacher_name ? `${u('by')} ${a.teacher_name}` : '', a.due ? `${u('due')}: ${a.due}` : '', ago(a.created_at)].filter(Boolean).join(' · ')}</p>
+      </div>
+      {a.prac ? <div className="row"><span className="badgeN">{String(a.prac).padStart(2, '0')}</span><b>{pracTitle(a.prac, lang)}</b>{LABS[a.prac] ? <button type="button" className="btn sm ghost" onClick={() => update((n) => { n.cur = a.prac; n.sec = 2; n.view = 'lab'; }, true)}>{u('open')}</button> : null}</div> : null}
+      {a.description ? <p className="adesc">{a.description}</p> : null}
+      {!comm.teacher ? (
+        <div className="enrollBox">
+          {!mine ? <button type="button" className="btn" disabled={busy} onClick={() => act(() => comm.enroll(id))}>{u('enroll')}</button> : (
+            <>
+              <div className="row"><span className={`stTag${mine.status === 'completed' ? ' done' : ''}`}>{mine.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span>{mine.completed_at ? <span className="muted">{ago(mine.completed_at)}</span> : null}</div>
+              <textarea aria-label={u('doneNote')} placeholder={u('doneNote')} maxLength={1000} style={{ minHeight: 60 }} value={note} onChange={(e) => setNote(e.target.value)} />
+              <div className="row">
+                {mine.status === 'completed'
+                  ? <button type="button" className="btn ghost sm" disabled={busy} onClick={() => act(() => comm.complete(id, note, false))}>{u('undoDone')}</button>
+                  : <button type="button" className="btn" disabled={busy} onClick={() => act(() => comm.complete(id, note, true))}>{u('markDone')}</button>}
+                {mine.status !== 'completed' ? <button type="button" className="btn ghost sm" disabled={busy} onClick={() => act(() => comm.leave(id))}>{u('leaveA')}</button> : null}
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div className="rowh"><h3>{u('studentsList')}</h3>{isAuthor ? <button type="button" className="btn sm ghost" onClick={async () => { if (!armed) { setArmed(true); return; } const e = await comm.delAssignment(id); if (e) setErr(errText(e, u)); else { comm.setFocus(null); onBack(); } }}>{armed ? u('confirm') : u('del')}</button> : null}</div>
+          {a.enrollments && a.enrollments.length ? (
+            <div className="tbl-wrap"><table><thead><tr><th>{u('student')}</th><th>{u('details')}</th><th>{u('doneNote')}</th></tr></thead><tbody>
+              {a.enrollments.map((e) => <tr key={e.student_id}><td className="lab">{e.student_name || u('someone')}</td><td><span className={`stTag${e.status === 'completed' ? ' done' : ''}`}>{e.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span></td><td style={{ fontFamily: 'var(--f-body)', textAlign: 'left' }}>{e.note}</td></tr>)}
+            </tbody></table></div>
+          ) : <div className="empty">{u('noEnrolled')}</div>}
+        </div>
+      )}
+      <div>
+        <h3>{u('comments')} <span className="muted mono">{a.comments.length}</span></h3>
+        {a.comments.length ? a.comments.map((c) => (
+          <div className="post" key={c.id}>
+            <Avatar id={c.author} name={c.author_name} size={34} />
+            <div>
+              <div className="meta"><b>{c.author === comm.uid ? u('you') : c.author_name || u('someone')}</b>{c.author_role === 'teacher' ? <span className="tagT">{u('teacher')}</span> : null}<span className="muted">{ago(c.created_at)}</span></div>
+              <div className="txt">{c.body}</div>
+              {c.author === comm.uid || comm.teacher ? <div className="acts"><button type="button" onClick={() => delC(c.id)}>{u('del')}</button></div> : null}
+            </div>
+          </div>
+        )) : <div className="empty">{u('noComments')}</div>}
+        <form className="compose" onSubmit={comment}>
+          <textarea aria-label={u('commentPh')} placeholder={u('commentPh')} maxLength={1000} style={{ minHeight: 60 }} value={text} onChange={(e) => setText(e.target.value)} />
+          <div className="row"><button type="submit" className="btn sm" disabled={busy}>{u('send')}</button></div>
+        </form>
+      </div>
+      {err ? <p className="fb bad">{err}</p> : null}
+    </div>
+  );
+}
+
 function Assignments() {
   const { u, lang } = useT(); const comm = useCommunity();
-  const [prac, setPrac] = useState(1); const [due, setDue] = useState(''); const [note, setNote] = useState(''); const [err, setErr] = useState('');
-  const add = async () => { const e = await comm.addAssignment(prac, due, note); if (e) setErr(u('postErr')); else { setNote(''); setErr(''); } };
+  const blank = { title: '', prac: '', due: '', description: '' };
+  const [f, setF] = useState(blank); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const add = async (e) => {
+    e.preventDefault(); if (!f.title.trim()) return; setBusy(true);
+    const x = await comm.addAssignment({ title: f.title.trim(), prac: f.prac ? +f.prac : null, due: f.due || null, description: f.description.trim() });
+    setBusy(false); if (x) setErr(errText(x, u)); else { setF(blank); setErr(''); }
+  };
+  if (comm.focus) return <AssignmentDetail id={comm.focus} onBack={() => comm.setFocus(null)} />;
   return (
     <div className="card">
       {comm.teacher ? (
-        <div className="compose">
+        <form className="compose" onSubmit={add}>
           <h3>{u('newAssign')}</h3>
+          <label className="fld"><span>{u('aTitle')}</span><input required maxLength={120} value={f.title} onChange={set('title')} /></label>
           <div className="row">
-            <select aria-label="Practical" value={prac} onChange={(e) => setPrac(+e.target.value)}>{Object.keys(LABS).map((id) => <option key={id} value={id}>{pracTag(id, u)} · {pracTitle(id, lang)}</option>)}</select>
-            <input type="date" aria-label={u('due')} className="date" value={due} onChange={(e) => setDue(e.target.value)} />
+            <label className="fld"><span>{u('aPrac')}</span><select value={f.prac} onChange={set('prac')}><option value="">{u('none')}</option>{PRAC.filter((p) => /^\d+$/.test(p[0])).map((p) => <option key={p[0]} value={p[0]}>{pracTag(p[0], u)} · {lang === 'si' ? p[2] : p[3]}</option>)}</select></label>
+            <label className="fld"><span>{u('due')}</span><input type="date" className="date" value={f.due} onChange={set('due')} /></label>
           </div>
-          <textarea aria-label={u('notePh')} placeholder={u('notePh')} maxLength={400} style={{ minHeight: 64 }} value={note} onChange={(e) => setNote(e.target.value)} />
-          <div className="row"><button type="button" className="btn" onClick={add}>{u('addBtn')}</button></div>
+          <label className="fld"><span>{u('aDesc')}</span><textarea maxLength={2000} style={{ minHeight: 72 }} value={f.description} onChange={set('description')} /></label>
+          <div className="row"><button type="submit" className="btn" disabled={busy}>{u('publish')}</button></div>
           {err ? <p className="fb bad">{err}</p> : null}
-        </div>
+        </form>
       ) : null}
-      {comm.assignments.length ? comm.assignments.map((a) => <AssignmentRow key={a.id} a={a} withDelete />) : <div className="empty">{u('noAssign')}</div>}
+      {comm.assignments.length ? comm.assignments.map((a) => <AssignmentRow key={a.id} a={a} />) : <div className="empty">{u('noAssign')}</div>}
     </div>
   );
 }
 
 export default function Community() {
   const { u } = useT(); const comm = useCommunity();
-  const [sub, setSub] = useState('discuss');
+  const [sub, setSub] = useState(comm.focus ? 'assign' : 'discuss');
+  useEffect(() => { if (comm.focus) setSub('assign'); }, [comm.focus]);
   const [nm, setNm] = useState('');
   const tabs = [['discuss', u('discuss')], ['results', u('classResults')], ['progress', u('classProg')], ['assign', u('assignments')]];
   let body;
@@ -240,7 +346,7 @@ export default function Community() {
     <div style={{ display: 'grid', gap: 14 }}>
       <div className="rowh">
         <h2 className="sec-h">{u('navComm')}</h2>
-        {comm.uid ? <span className="row"><span className="muted">{comm.me?.name || comm.session?.user?.email}{comm.teacher ? ` · ${u('teacher')}` : ''}</span><button type="button" className="link" onClick={comm.signOut}>{u('signOut')}</button></span> : null}
+        {comm.uid ? <span className="row"><span className="muted">{comm.me?.name || comm.me?.email}{comm.teacher ? ` · ${u('teacher')}` : ''}</span><button type="button" className="link" onClick={comm.signOut}>{u('signOut')}</button></span> : null}
       </div>
       {needName ? (
         <form className="card row" onSubmit={(e) => { e.preventDefault(); if (nm.trim()) comm.rename(nm.trim().slice(0, 60)); }}>
