@@ -58,13 +58,13 @@ export default function Home({ go }) {
       <div className="home-grid" style={{ marginTop: 8 }}>
         <div className="card">
           <h3>{u('assignments')}</h3>
-          {!comm.uid ? <div className="empty">{u('signInToJoin')}</div>
+          {!comm.uid ? <div className="empty">{u('signInToJoin')} <button type="button" className="link" onClick={() => { comm.setAuthMode('in'); go('comm'); }}>{u('signInTab')}</button></div>
             : comm.assignments.length ? comm.assignments.slice(0, 4).map((a) => <AssignmentRow key={a.id} a={a} onOpen={() => { comm.setFocus(a.id); go('comm'); }} />)
               : <div className="empty">{u('noAssign')}</div>}
         </div>
         <div className="card">
           <div className="rowh"><h3>{u('pulse')}</h3><button type="button" className="link" onClick={() => go('comm')}>{u('toComm')}</button></div>
-          {!comm.uid ? <div className="empty">{u('signInToJoin')}</div>
+          {!comm.uid ? <div className="empty">{u('signInToJoin')} <button type="button" className="link" onClick={() => { comm.setAuthMode('in'); go('comm'); }}>{u('signInTab')}</button></div>
             : tops.length ? tops.map((p) => <PostItem key={p.id} p={p} compact />) : <div className="empty">{u('noPosts')}</div>}
         </div>
       </div>

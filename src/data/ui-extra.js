@@ -59,3 +59,19 @@ Object.assign(UI, {
   noEnrolled: { si: 'තවම කිසිවෙකු ලියාපදිංචි වී නැත.', en: 'No students have enrolled yet.' },
   by: { si: 'පළ කළේ', en: 'by' },
 });
+
+Object.assign(UI, {
+  signInToJoin: { si: 'පැවරුම් සහ සාකච්ඡා බැලීමට පුරනය වන්න.', en: 'Sign in to see assignments and discussion.' },
+  signInTitle: { si: 'නැවත සාදරයෙන් පිළිගනිමු', en: 'Welcome back' },
+  signUpTitle: { si: 'ගිණුමක් සාදන්න', en: 'Create your account' },
+  noAcct: { si: 'ගිණුමක් නැද්ද?', en: 'No account yet?' },
+  haveAcct: { si: 'දැනටමත් ගිණුමක් තිබේද?', en: 'Already have an account?' },
+  serverSoon: { si: 'පුරනය වීමේ සේවාදායකය තවම සකසමින් පවතී. ටික වේලාවකින් නැවත උත්සාහ කරන්න.', en: 'Sign-in isn’t available yet: the server is still being set up. Please try again soon.' },
+  emailTaken: { si: 'මෙම ඊමේල් සමඟ ගිණුමක් දැනටමත් ඇත. පුරනය වන්න.', en: 'An account with this email already exists. Sign in instead.' },
+  tooMany: { si: 'උත්සාහයන් වැඩියි. මිනිත්තු කිහිපයකින් නැවත උත්සාහ කරන්න.', en: 'Too many attempts. Try again in a few minutes.' },
+});
+
+Object.assign(UI, {
+  colStatus: { si: 'තත්ත්වය', en: 'Status' },
+  colNote: { si: 'සටහන', en: 'Note' },
+});

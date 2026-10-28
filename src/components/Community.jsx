@@ -72,13 +72,16 @@ function errText(e, u) {
   if (!e) return '';
   if (e.code === 'wrong_teacher_code') return u('wrongCode');
   if (e.code === 'invalid_login') return u('badLogin');
-  if (e.code === 'network' || e.code === 'not_api' || e.status === 503) return u('netErr');
+  if (e.status === 503) return u('serverSoon');
+  if (e.code === 'email_taken') return u('emailTaken');
+  if (e.code === 'rate_limited') return u('tooMany');
+  if (e.code === 'network' || e.code === 'not_api' || e.status === 404) return u('netErr');
   return e.message || u('postErr');
 }
 
 function AuthCard() {
   const { u } = useT(); const comm = useCommunity();
-  const [mode, setMode] = useState('in');
+  const mode = comm.authMode; const setMode = comm.setAuthMode;
   const [f, setF] = useState({ name: '', email: '', password: '', role: 'student', teacherCode: '' });
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
@@ -97,7 +100,9 @@ function AuthCard() {
       <div className="ctabs" role="tablist">
         {[['in', u('signInTab')], ['up', u('signUpTab')]].map(([k, t]) => <button type="button" role="tab" key={k} className="chip" aria-selected={mode === k} aria-pressed={mode === k} onClick={() => { setMode(k); setMsg(null); }}>{t}</button>)}
       </div>
+      <h3>{mode === 'in' ? u('signInTitle') : u('signUpTitle')}</h3>
       <p className="muted">{u('authHelp')}</p>
+      {comm.ready && !comm.enabled ? <p className="fb info">{u('serverSoon')}</p> : null}
       {mode === 'up' ? <label className="fld"><span>{u('yourName')}</span><input required value={f.name} onChange={set('name')} maxLength={60} autoComplete="name" /></label> : null}
       <label className="fld"><span>{u('email')}</span><input type="email" required value={f.email} onChange={set('email')} autoComplete="email" /></label>
       <label className="fld"><span>{u('password')}</span><input type="password" required minLength={mode === 'up' ? 8 : 1} maxLength={72} value={f.password} onChange={set('password')} autoComplete={mode === 'up' ? 'new-password' : 'current-password'} />{mode === 'up' ? <small className="muted">{u('pwHelp')}</small> : null}</label>
@@ -111,6 +116,7 @@ function AuthCard() {
       {mode === 'up' && f.role === 'teacher' ? <label className="fld"><span>{u('teacherCode')}</span><input required value={f.teacherCode} onChange={set('teacherCode')} autoComplete="off" /><small className="muted">{u('teacherCodeHelp')}</small></label> : null}
       <div className="row"><button className="btn" type="submit" disabled={busy}>{mode === 'in' ? u('signInBtn') : u('createAcct')}</button></div>
       {msg ? <p className={`fb ${msg[0]}`} role="status">{msg[1]}</p> : null}
+      <p className="muted" style={{ fontSize: 13.5 }}>{mode === 'in' ? u('noAcct') : u('haveAcct')} <button type="button" className="link" onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setMsg(null); }}>{mode === 'in' ? u('signUpTab') : u('signInTab')}</button></p>
     </form>
   );
 }
@@ -271,7 +277,7 @@ function AssignmentDetail({ id, onBack }) {
         <div>
           <div className="rowh"><h3>{u('studentsList')}</h3>{isAuthor ? <button type="button" className="btn sm ghost" onClick={async () => { if (!armed) { setArmed(true); return; } const e = await comm.delAssignment(id); if (e) setErr(errText(e, u)); else { comm.setFocus(null); onBack(); } }}>{armed ? u('confirm') : u('del')}</button> : null}</div>
           {a.enrollments && a.enrollments.length ? (
-            <div className="tbl-wrap"><table><thead><tr><th>{u('student')}</th><th>{u('details')}</th><th>{u('doneNote')}</th></tr></thead><tbody>
+            <div className="tbl-wrap"><table><thead><tr><th>{u('student')}</th><th>{u('colStatus')}</th><th>{u('colNote')}</th></tr></thead><tbody>
               {a.enrollments.map((e) => <tr key={e.student_id}><td className="lab">{e.student_name || u('someone')}</td><td><span className={`stTag${e.status === 'completed' ? ' done' : ''}`}>{e.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span></td><td style={{ fontFamily: 'var(--f-body)', textAlign: 'left' }}>{e.note}</td></tr>)}
             </tbody></table></div>
           ) : <div className="empty">{u('noEnrolled')}</div>}
@@ -337,9 +343,8 @@ export default function Community() {
   const [nm, setNm] = useState('');
   const tabs = [['discuss', u('discuss')], ['results', u('classResults')], ['progress', u('classProg')], ['assign', u('assignments')]];
   let body;
-  if (!comm.enabled) body = <div className="empty">{u('noBackend')}</div>;
-  else if (!comm.ready) body = <div className="empty">…</div>;
-  else if (!comm.uid) body = <AuthCard />;
+  if (!comm.uid) body = <AuthCard />;
+  else if (!comm.enabled) body = <div className="empty">{u('noBackend')}</div>;
   else body = sub === 'discuss' ? <Discussion /> : sub === 'results' ? <ClassResults /> : sub === 'progress' ? <ClassProgress /> : <Assignments />;
   const needName = comm.uid && comm.me && !comm.me.name;
   return (

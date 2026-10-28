@@ -34,3 +34,8 @@ src/lib/         State, calculations, i18n, Supabase community layer
 src/components/  App shell, Home, Lab + handbook sections, Community
 supabase/        Database schema and policies
 ```
+
+## Project layout
+
+- `/` — the React frontend (Vite), deployed on Vercel.
+- `/backend` — the Node.js API (Express and Supabase). See `backend/README.md` for setup, deployment and the endpoint list. The frontend calls the API at `VITE_API_URL`.

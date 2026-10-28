@@ -326,3 +326,8 @@ body[data-view="lab"] .status{display:none}
 .enrollBox{display:grid;gap:10px;padding:14px;border:1.5px dashed var(--line);border-radius:14px}
 .compose .row .fld{flex:1;min-width:160px}
 @media (max-width:560px){.ai{grid-template-columns:auto 1fr}.ai>.row{grid-column:1/-1;justify-content:flex-end}}
+.acct-btns{display:flex;gap:6px;align-items:center}
+.acct{display:flex;gap:6px;align-items:center;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-weight:600;max-width:46vw}
+.acct-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth{margin-inline:auto;width:100%}
+@media (max-width:560px){.acct-btns .btn.ghost{display:none}}
