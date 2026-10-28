@@ -113,10 +113,8 @@ end;
 $$;
 revoke execute on function public.decide_role() from public, anon, authenticated;
 revoke execute on function public.create_profile() from public, anon, authenticated;
-drop trigger if exists decide_role_before_signup on auth.users;
-create trigger decide_role_before_signup before insert on auth.users for each row execute function public.decide_role();
-drop trigger if exists create_profile_after_signup on auth.users;
-create trigger create_profile_after_signup after insert on auth.users for each row execute function public.create_profile();
+create or replace trigger decide_role_before_signup before insert on auth.users for each row execute function public.decide_role();
+create or replace trigger create_profile_after_signup after insert on auth.users for each row execute function public.create_profile();
 
 -- ---------- row-level security ----------
 alter table public.profiles enable row level security;
@@ -157,6 +155,8 @@ create policy "progress: write own" on public.progress for insert to authenticat
 create policy "progress: update own" on public.progress for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
 -- ---------- table privileges (exactly what the policies need) ----------
+-- Important: new Supabase projects grant ALL (including TRUNCATE) on new tables to anon/authenticated.
+-- These revokes remove that, and stop users from changing their own role.
 grant usage on schema public to anon, authenticated;
 revoke all on public.profiles, public.assignments, public.enrollments, public.assignment_comments, public.posts, public.results, public.progress from anon, authenticated;
 grant select on public.profiles to authenticated;
