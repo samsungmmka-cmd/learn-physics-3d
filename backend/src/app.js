@@ -19,7 +19,8 @@ export function createApp(config, { db = config.dbConfigured ? createDb(config) 
   app.disable('x-powered-by');
   app.set('trust proxy', 1); // behind Vercel / a load balancer: rate limits use the real client IP
   app.use(pinoHttp({ logger: log, autoLogging: { ignore: (req) => req.url === '/api/health' } }));
-  app.use(helmet());
+  // JSON API called from the frontend's own domain: allow cross-origin reads (CORS still decides who may call).
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(cors({
     origin: (origin, cb) => cb(null, !origin || config.corsOrigins.includes('*') || config.corsOrigins.includes(origin)),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
