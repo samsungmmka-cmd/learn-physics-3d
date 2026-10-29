@@ -6,9 +6,9 @@
   --good:#2A8C53; --good-soft:#DDF1E3; --bad:#C43A2E; --bad-soft:#F9E0DB; --info:#EFE6D8;
   --c1:#E3A91C; --c2:#2E6CD6; --c3:#8E45CB; --c4:#F26B1D; --c5:#2A9A5A; --c6:#D0453A;
   --shadow:0 1px 0 rgba(90,65,30,.05),0 10px 28px -16px rgba(90,65,30,.35);
-  --f-disp:var(--f-body);
+  --f-disp:"Barlow Condensed","Noto Sans Sinhala","Arial Narrow",sans-serif;
   --f-body:"Barlow","Noto Sans Sinhala","Segoe UI",system-ui,sans-serif;
-  --f-mono:var(--f-body);
+  --f-mono:"JetBrains Mono","Noto Sans Sinhala",ui-monospace,Menlo,monospace;
   --r:18px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -378,26 +378,3 @@ body[data-view="lab"] .status{display:none}
 .st-r span{white-space:nowrap}
 .st-date.si{font-family:var(--f-body);letter-spacing:.02em;font-weight:600}
 .st-r{gap:2px 12px}
-
-/* ---------- Typography: one font family for the whole app ----------
-   Barlow for Latin text, Noto Sans Sinhala for Sinhala. Headings and labels use normal
-   case (no forced capitals, no wide letter-spacing), so mixed-case text reads evenly.
-   Only the logo wordmark stays in capitals. */
-html,body,button,input,select,textarea{font-family:var(--f-body)}
-input::placeholder,textarea::placeholder{font-family:var(--f-body);letter-spacing:normal;opacity:1;color:var(--muted)}
-.tag,.st-l .t,.st-r,.co .pill,.chipT b,.loupe .lh,.ctrlbar .cap,.sec-h,.card h3,.pcard .nm,.pcard .no,.phead h1,.phead .no,
-.body h2,.eyebrow,.lbl-s,.book small,.tagT,.tagP,.stTag,.hereNow,.gi small,.tab .k,caption,.st-date.si{
-  text-transform:none;letter-spacing:normal}
-.wordmark h1{text-transform:uppercase}
-.tag{letter-spacing:.02em}
-.sec-h{font-weight:800;letter-spacing:-.01em}
-h1,h2,h3{font-weight:700;letter-spacing:-.005em}
-.card h3{font-size:19px}
-.st-l .t{font-size:18px}
-.st-r{font-size:15px;font-weight:600}
-.pcard .nm{font-size:16px}
-.badgeN,.pcard .th .glyph,.gi .n,.st-bar b{font-weight:800}
-.eyebrow,.lbl-s,.book small{font-size:12px;font-weight:700}
-.tagT,.stTag,.tagP{font-size:11.5px;font-weight:700}
-/* numbers line up in tables, readings and the clock */
-td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-variant-numeric:tabular-nums}
