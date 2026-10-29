@@ -70,14 +70,14 @@ html[lang="si"] .tag{letter-spacing:.08em}
 .stage{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background-color:var(--paper);
   background-image:repeating-linear-gradient(30deg,var(--grid) 0 1px,transparent 1px 26px),repeating-linear-gradient(-30deg,var(--grid) 0 1px,transparent 1px 26px);touch-action:none;min-height:420px;height:100%}
 .stage>canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
-.co{position:absolute;left:0;top:0;pointer-events:none;display:flex;align-items:center;gap:8px;white-space:nowrap;z-index:3}
-.co .pt{width:16px;height:16px;border-radius:50%;background:var(--cc);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);flex:none;transform:translateX(-8px)}
+
+
 .co .pill{display:flex;align-items:center;gap:8px;background:#fff;color:#1E1912;font-family:var(--f-disp);font-weight:700;font-size:14.5px;letter-spacing:.04em;text-transform:uppercase;padding:5px 11px 5px 9px;border-radius:12px;box-shadow:0 2px 8px rgba(60,40,20,.18)}
 html[lang="si"] .co .pill{text-transform:none;letter-spacing:0;font-size:13.5px}
-.co .pill i{width:9px;height:9px;border-radius:50%;background:var(--cc)}
-.co.hl .pill{background:var(--cc);color:#fff}.co.hl .pill i{background:#fff}
+
+
 .co.dim{opacity:.35}
-.co.flip{flex-direction:row-reverse}.co.flip .pt{transform:translateX(8px)}
+
 .co.hidden{display:none}
 .hud{position:absolute;left:14px;top:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none;z-index:4}
 .chipT{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 12px;box-shadow:var(--shadow);max-width:62%}
@@ -386,3 +386,16 @@ body{font-size:14px}
 html[lang="si"] body{font-size:15px}
 button,input,select,textarea,input::placeholder,textarea::placeholder{font-family:var(--f-body)}
 td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-variant-numeric:tabular-nums}
+
+/* Part labels: name tags around the instrument with an arrow to each part (engine draws the arrows). */
+.co{position:absolute;left:0;top:0;pointer-events:none;white-space:nowrap;z-index:3;will-change:transform}
+.co .pill{border-left:4px solid var(--cc);border-radius:10px;padding:5px 11px 5px 9px}
+.co.hl .pill{background:var(--cc);color:#fff;border-left-color:#fff}
+.co-arrows{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:2;pointer-events:none}
+.co-arrows .arw{color:var(--cc)}
+.co-arrows .halo{fill:#fff;stroke:#fff;stroke-width:5;stroke-linejoin:round;stroke-linecap:round;opacity:.9}
+.co-arrows .ln{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.co-arrows .hd{fill:currentColor;stroke:currentColor;stroke-width:1;stroke-linejoin:round}
+.co-arrows .tail{fill:currentColor;stroke:#fff;stroke-width:1.6}
+.co-arrows .arw.hl .ln{stroke-width:3.2}
+@media (max-width:560px){ .co .pill{font-size:12px;padding:3px 8px 3px 7px;border-left-width:3px;border-radius:8px} html[lang="si"] .co .pill{font-size:12px} }

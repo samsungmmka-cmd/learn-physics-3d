@@ -481,7 +481,8 @@ export function createEngine() {
     VIEW.el = (rig.mode === 'free' ? 60 : 33) * DEG;
     const fb = new THREE.Box3(); rig.focusObjs().forEach((o) => fb.expandByObject(o)); const c = fb.getCenter(new THREE.Vector3());
     if (E.mode === 'lab') c.y -= (fb.max.y - fb.min.y) * 0.18;
-    camHome = { target: c.clone(), zoom: fitZoom(fb, c, VIEW.az), az: VIEW.az }; E.resetView();
+    const room = labels.length && !thumbAspect ? (root.clientWidth < 560 ? 0.8 : 0.74) : 1; // space around the instrument for part labels
+    camHome = { target: c.clone(), zoom: fitZoom(fb, c, VIEW.az) * room, az: VIEW.az }; E.resetView();
   }
   E.resetView = () => {
     if (!E.ok || !camHome) return; VIEW.az = camHome.az;
@@ -491,32 +492,146 @@ export function createEngine() {
   E.rotateBy = (d) => { if (!E.ok) return; const t = controls.target, off = camera.position.clone().sub(t); const a0 = Math.atan2(off.x, off.z); camAnim = { t: 0, a0, a1: a0 + d, r: Math.hypot(off.x, off.z), y: off.y }; };
   E.zoomBy = (f) => { if (!E.ok) return; camera.zoom = Math.min(controls.maxZoom, Math.max(controls.minZoom, camera.zoom * f)); camera.updateProjectionMatrix(); };
 
+  /* ---------- part labels: name tags placed around the instrument, with arrows to each part ---------- */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const arrowSvg = document.createElementNS(SVGNS, 'svg'); arrowSvg.setAttribute('class', 'co-arrows'); coLayer.appendChild(arrowSvg);
   let coIdx = 0;
   function addLabel(text, target, key) {
-    const el = document.createElement('div'); el.className = 'co'; el.style.setProperty('--cc', `var(--c${(coIdx++ % 6) + 1})`);
-    el.innerHTML = '<span class="pt"></span><span class="pill"><i></i><span></span></span>'; el.querySelector('.pill span').textContent = text;
-    coLayer.appendChild(el); labels.push({ el, target, key });
+    const n = (coIdx++ % 6) + 1;
+    const el = document.createElement('div'); el.className = 'co'; el.style.setProperty('--cc', `var(--c${n})`);
+    el.innerHTML = '<span class="pill"><span></span></span>'; el.querySelector('.pill span').textContent = text;
+    coLayer.appendChild(el);
+    const g = document.createElementNS(SVGNS, 'g'); g.setAttribute('class', 'arw'); g.style.setProperty('--cc', `var(--c${n})`);
+    g.innerHTML = '<path class="halo"/><path class="ln"/><path class="hd"/><circle class="tail" r="3.2"/>';
+    arrowSvg.appendChild(g);
+    labels.push({ el, g, target, key });
   }
-  function clearLabels() { labels.splice(0).forEach((l) => l.el.remove()); coIdx = 0; }
-  E.highlight = (key) => labels.forEach((l) => l.el.classList.toggle('hl', key != null && l.key === key));
-  const _v = new THREE.Vector3();
+  function clearLabels() { labels.splice(0).forEach((l) => { l.el.remove(); l.g.remove(); }); coIdx = 0; }
+  E.highlight = (key) => labels.forEach((l) => { const on = key != null && l.key === key; l.el.classList.toggle('hl', on); l.g.classList.toggle('hl', on); });
+  const _v = new THREE.Vector3(); const _b = new THREE.Box3(); const _p = new THREE.Vector3();
+  // Screen rectangles the labels must not cover (info card, tool buttons, loupe, call-to-action).
+  function obstacles() {
+    const host = root.getBoundingClientRect(); const stage = root.closest('.stage'); if (!stage) return [];
+    return [...stage.querySelectorAll('.hud .chipT, .hud .status3, .tools, .hero-cta, .bottom')].map((el) => {
+      const r = el.getBoundingClientRect(); return { x0: r.left - host.left - 6, y0: r.top - host.top - 6, x1: r.right - host.left + 6, y1: r.bottom - host.top + 6 };
+    }).filter((r) => r.x1 > r.x0 && r.y1 > r.y0);
+  }
+  // On-screen box of the instrument itself (not the mat), so labels sit outside it.
+  function instrumentRect(w, h) {
+    _b.makeEmpty(); E.rig.focusObjs().forEach((o) => _b.expandByObject(o));
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (let i = 0; i < 8; i++) {
+      _p.set(i & 1 ? _b.max.x : _b.min.x, i & 2 ? _b.max.y : _b.min.y, i & 4 ? _b.max.z : _b.min.z).project(camera);
+      const x = ((_p.x + 1) / 2) * w, y = ((1 - _p.y) / 2) * h; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    }
+    return { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+  }
+  const overlap = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+  let obsCache = null, obsT = 0;
   function updLabels() {
-    const w = root.clientWidth, h = root.clientHeight; const pos = [];
+    if (!labels.length || !E.rig) return;
+    const w = root.clientWidth, h = root.clientHeight; if (!w || !h) return;
+    const now = performance.now(); if (!obsCache || now - obsT > 500) { obsCache = obstacles(); obsT = now; }
+    const box = instrumentRect(w, h); const GAP = w < 560 ? 14 : 26, PAD = 8;
+    const items = [];
     for (const l of labels) {
       l.target.getWorldPosition(_v); _v.project(camera);
-      const vis = _v.x > -1.05 && _v.x < 1.05 && _v.y > -1.05 && _v.y < 1.05; l.el.classList.toggle('hidden', !vis);
-      if (vis) {
-        let x = ((_v.x + 1) / 2) * w; const y = ((1 - _v.y) / 2) * h, ew = l.el.offsetWidth || 120;
-        const flip = x + ew > w - (w < 760 ? 64 : 8); l.el.classList.toggle('flip', flip); if (flip) x = x - ew + 16;
-        l.el.style.transform = `translate(${x}px,${y}px) translateY(-50%)`; pos.push({ l, x, y, w: ew });
-      }
+      const vis = _v.x > -1.05 && _v.x < 1.05 && _v.y > -1.05 && _v.y < 1.05 && _v.z < 1;
+      l.el.classList.toggle('hidden', !vis); l.g.style.display = vis ? '' : 'none';
+      if (!vis) continue;
+      const tx = ((_v.x + 1) / 2) * w, ty = ((1 - _v.y) / 2) * h;
+      const ew = l.el.offsetWidth || 110, eh = l.el.offsetHeight || 28;
+      // Pick the side of the instrument facing this part, then put the tag just outside the instrument.
+      const dx = (tx - box.cx) / Math.max(40, box.x1 - box.x0), dy = (ty - box.cy) / Math.max(40, box.y1 - box.y0);
+      const roomL = box.x0 - GAP - PAD, roomR = w - box.x1 - GAP - PAD;
+      let side = Math.abs(dx) * 1.15 > Math.abs(dy) ? (dx < 0 ? 'l' : 'r') : (dy < 0 ? 't' : 'b');
+      if (side === 'l' && roomL < ew) side = roomR >= ew ? 'r' : (dy < 0 ? 't' : 'b');
+      if (side === 'r' && roomR < ew) side = roomL >= ew ? 'l' : (dy < 0 ? 't' : 'b');
+      let x, y;
+      if (side === 'l') { x = box.x0 - GAP - ew; y = ty - eh / 2; }
+      else if (side === 'r') { x = box.x1 + GAP; y = ty - eh / 2; }
+      else if (side === 't') { x = tx - ew / 2; y = box.y0 - GAP - eh; }
+      else { x = tx - ew / 2; y = box.y1 + GAP; }
+      items.push({ l, tx, ty, ew, eh, side, x, y });
     }
-    pos.sort((a, b) => a.y - b.y); const placed = [];
-    for (const p of pos) {
-      let dy = Math.max(0, 62 - p.y);
-      for (let k = 0; k < 8; k++) { const top = p.y + dy - 15, bot = p.y + dy + 15; const hit = placed.find((q) => p.x < q.x + q.w && p.x + p.w > q.x && top < q.b && bot > q.t); if (!hit) break; dy = hit.b - p.y + 16; }
-      placed.push({ x: p.x, w: p.w, t: p.y + dy - 15, b: p.y + dy + 15 });
-      p.l.el.lastChild.style.transform = dy ? `translateY(${dy}px)` : '';
+    // Lay the tags out side by side along each edge of the instrument, in the same order as the
+    // parts they point to, so arrows never cross. Tags that don't fit move one row further out,
+    // then to the opposite side.
+    const placed = []; const G = 6;
+    const FLIP = { t: 'b', b: 't', l: 'r', r: 'l' };
+    const blocked = (band, horiz) => [...obsCache, ...placed].filter((q) => (horiz ? q.y0 < band[1] && q.y1 > band[0] : q.x0 < band[1] && q.x1 > band[0]))
+      .map((q) => (horiz ? [q.x0, q.x1] : [q.y0, q.y1])).sort((m, n) => m[0] - n[0]);
+    function packSide(side, list) {
+      const horiz = side === 't' || side === 'b'; let rest = list;
+      const eh = Math.max(...list.map((i) => i.eh)), ew = Math.max(...list.map((i) => i.ew));
+      for (let row = 0; row < 4 && rest.length; row++) {
+        // cross-axis position of this row/column
+        let c0;
+        if (side === 't') c0 = box.y0 - GAP - eh - row * (eh + G);
+        else if (side === 'b') c0 = box.y1 + GAP + row * (eh + G);
+        else if (side === 'l') c0 = box.x0 - GAP - ew - row * (ew + G);
+        else c0 = box.x1 + GAP + row * (ew + G);
+        const cLen = horiz ? eh : ew, cMax = horiz ? h : w;
+        if (c0 < PAD || c0 + cLen > cMax - PAD) break;
+        const band = [c0 - 2, c0 + cLen + 2], bl = blocked(band, horiz), aMax = (horiz ? w : h) - PAD;
+        let cursor = PAD; const next = [];
+        for (const it of rest) {
+          const len = horiz ? it.ew : it.eh; const want = (horiz ? it.tx : it.ty) - len / 2;
+          let pos = Math.max(want, cursor);
+          for (const [b0, b1] of bl) if (pos < b1 + G && pos + len > b0 - G) pos = Math.max(pos, b1 + G);
+          if (pos + len > aMax) { next.push(it); continue; }
+          it.side = side;
+          if (horiz) { it.px = pos; it.py = side === 't' ? c0 + (eh - it.eh) : c0; } else { it.py = pos; it.px = side === 'l' ? c0 + (ew - it.ew) : c0; }
+          cursor = pos + len + G;
+          placed.push({ x0: it.px - 3, y0: it.py - 3, x1: it.px + it.ew + 3, y1: it.py + it.eh + 3 });
+        }
+        rest = next;
+      }
+      return rest;
+    }
+    const bySide = { t: [], b: [], l: [], r: [] }; items.forEach((it) => bySide[it.side].push(it));
+    const axisSort = (side) => (m, n) => (side === 't' || side === 'b' ? m.tx - n.tx : m.ty - n.ty);
+    const left = [];
+    for (const side of ['t', 'b', 'l', 'r']) {
+      if (!bySide[side].length) continue;
+      const rest = packSide(side, bySide[side].sort(axisSort(side)));
+      if (rest.length) left.push(...packSide(FLIP[side], rest.sort(axisSort(FLIP[side]))));
+    }
+    // Tags that still don't fit (small screens): nearest free spot anywhere on the stage that
+    // doesn't cover another tag, the buttons/panels, or any of the parts being pointed at.
+    const dots = items.map((i) => ({ x0: i.tx - 9, y0: i.ty - 9, x1: i.tx + 9, y1: i.ty + 9 }));
+    for (const it of left) {
+      let best = null, bestD = 1e18;
+      for (let y = PAD; y <= h - PAD - it.eh; y += 6) {
+        for (let x = PAD; x <= w - PAD - it.ew; x += 6) {
+          const r = { x0: x - 3, y0: y - 3, x1: x + it.ew + 3, y1: y + it.eh + 3 };
+          if (placed.some((q) => overlap(r, q)) || obsCache.some((q) => overlap(r, q)) || dots.some((q) => overlap(r, q))) continue;
+          const cx = x + it.ew / 2, cy = y + it.eh / 2, d = (cx - it.tx) ** 2 + (cy - it.ty) ** 2;
+          if (d < bestD && d > 900) { bestD = d; best = { x, y, r }; }
+        }
+      }
+      if (best) { it.px = best.x; it.py = best.y; placed.push(best.r); }
+      else { it.px = Math.min(Math.max(PAD, it.x), w - PAD - it.ew); it.py = Math.min(Math.max(PAD, it.y), h - PAD - it.eh); }
+      // arrow leaves from whichever edge faces the part
+      const cx = it.px + it.ew / 2, cy = it.py + it.eh / 2, ddx = it.tx - cx, ddy = it.ty - cy;
+      it.side = Math.abs(ddx) / it.ew > Math.abs(ddy) / it.eh ? (ddx > 0 ? 'l' : 'r') : (ddy > 0 ? 't' : 'b');
+    }
+    for (const it of items) {
+      const best = { x: it.px, y: it.py };
+      it.l.el.style.transform = `translate(${Math.round(best.x)}px,${Math.round(best.y)}px)`;
+      // Arrow: from the tag's edge to the part, ending in an arrowhead at the part.
+      const sx = Math.min(Math.max(it.tx, best.x), best.x + it.ew), sy = Math.min(Math.max(it.ty, best.y), best.y + it.eh);
+      const ax = it.side === 'l' ? best.x + it.ew : it.side === 'r' ? best.x : sx;
+      const ay = it.side === 't' ? best.y + it.eh : it.side === 'b' ? best.y : sy;
+      const len = Math.hypot(it.tx - ax, it.ty - ay) || 1, ux = (it.tx - ax) / len, uy = (it.ty - ay) / len;
+      const ex = it.tx - ux * 2, ey = it.ty - uy * 2; // stop just short of the point so the tip sits on the part
+      const HL = 11, HW = 6.5; const bx = ex - ux * HL, by = ey - uy * HL;
+      const line = `M${ax.toFixed(1)},${ay.toFixed(1)} L${bx.toFixed(1)},${by.toFixed(1)}`;
+      const head = `M${ex.toFixed(1)},${ey.toFixed(1)} L${(bx - uy * HW).toFixed(1)},${(by + ux * HW).toFixed(1)} L${(bx + uy * HW).toFixed(1)},${(by - ux * HW).toFixed(1)} Z`;
+      const [halo, ln, hd, tail] = it.l.g.children;
+      halo.setAttribute('d', `${line} ${head}`); ln.setAttribute('d', line); hd.setAttribute('d', head);
+      tail.setAttribute('cx', ax.toFixed(1)); tail.setAttribute('cy', ay.toFixed(1));
+      it.l.g.style.display = len < 14 ? 'none' : '';
     }
   }
 
