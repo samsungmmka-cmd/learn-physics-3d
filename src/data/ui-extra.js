@@ -93,3 +93,8 @@ Object.assign(UI, {
   linkExpired: { si: 'මෙම සබැඳිය කල් ඉකුත් වී ඇත හෝ දැනටමත් භාවිතා කර ඇත. නව සබැඳියක් ඉල්ලන්න.', en: 'This link has expired or was already used. Request a new one.' },
   backToSignIn: { si: 'පුරනය වීමට ආපසු', en: 'Back to sign in' },
 });
+
+Object.assign(UI, {
+  showLabels: { si: 'කොටස්වල නම් පෙන්වන්න', en: 'Show part labels' },
+  hideLabels: { si: 'කොටස්වල නම් සඟවන්න', en: 'Hide part labels' },
+});

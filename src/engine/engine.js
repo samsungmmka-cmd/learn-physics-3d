@@ -150,6 +150,17 @@ export function createEngine() {
   }
   const lathe = (pts, seg = 64) => new THREE.LatheGeometry(pts.map((p) => new THREE.Vector2(p[0], p[1])), seg);
   function anchor(parent, x, y, z) { const o = new THREE.Object3D(); o.position.set(x, y, z); parent.add(o); return o; }
+  // A label point on a part that spins (thimble, screw head): it follows the part when it moves,
+  // but ignores the spin, so the arrow stays steady on the same spot instead of circling round.
+  const followers = [];
+  function steadyAnchor(spinner, x, y, z) {
+    const o = new THREE.Object3D(); o.userData.follow = { spinner, off: new THREE.Vector3(x, y, z) };
+    const attach = () => { if (!o.parent && spinner.parent) spinner.parent.add(o); };
+    attach(); followers.push(o); o.userData.attach = attach; return o;
+  }
+  function updFollowers() {
+    for (const o of followers) { const { spinner, off } = o.userData.follow; o.userData.attach(); o.position.copy(spinner.position).add(off); }
+  }
   const clearGroup = (g) => { while (g.children.length) { const o = g.children.pop(); o.traverse((c) => { if (c.geometry) c.geometry.dispose(); }); } };
 
   function buildBase() {
@@ -314,7 +325,7 @@ export function createEngine() {
     const rg = new THREE.CylinderGeometry(4.6, 4.6, 10, 40); rg.rotateZ(-Math.PI / 2); rg.translate(31, 0, 0); const ratM = mesh(rg, m.knurlBlack, 0, 0, 0, T);
     mesh(new THREE.CylinderGeometry(1.6, 1.6, 5, 16), m.steel, 29, 6.5, 0, g0); mesh(new THREE.SphereGeometry(2.2, 16, 12), m.black, 29, 9.4, 0, g0);
     R.dragTargets = [bevM, bodyM, ratM]; R.objG = new THREE.Group(); rootG.add(R.objG);
-    R.anchors = { anvil: anchor(g0, -2, 4, 0), spindle: anchor(g0, 14, 4, 0), sleeve: anchor(g0, 40, 5, 0), thimble: anchor(T, 14, 7, 0), circ: anchor(T, 1, -7, 0), ratchet: anchor(T, 33, 5, 0), frame: anchor(g0, 10, -32, 0) };
+    R.anchors = { anvil: anchor(g0, -2, 4, 0), spindle: anchor(g0, 14, 4, 0), sleeve: anchor(g0, 40, 5, 0), thimble: steadyAnchor(T, 14, 7, 0), circ: steadyAnchor(T, 1, -7, 0), ratchet: steadyAnchor(T, 33, 5, 0), frame: anchor(g0, 10, -32, 0) };
     R.setE = (e) => {
       if (R.e === e && R.sMat.map) return;
       R.e = e; if (R.sMat.map) R.sMat.map.dispose();
@@ -407,7 +418,7 @@ export function createEngine() {
     R.vPlane = mesh(new THREE.PlaneGeometry(6, 22), R.vMat, 0, 0, 0.55, R.vPlate); R.vPlane.castShadow = false;
     mesh(new THREE.BoxGeometry(6.4, 22.4, 1), m.steelD, 0, 0, 0, R.vPlate);
     R.dragTargets = [dc, dt, knob]; R.surfG = new THREE.Group(); rootG.add(R.surfG);
-    R.anchors = { vscale: anchor(R.vPlate, 3, 8, 0), cscale: anchor(disc, -20, 2, 18), screw: anchor(SC, 0, 30, 3), tip: anchor(SC, 0, 0, 3), legs: anchor(body, 24, 16, 0), knob: anchor(SC, 4, 86, 0) };
+    R.anchors = { vscale: anchor(R.vPlate, 3, 8, 0), cscale: steadyAnchor(SC, -20, 57, 18), screw: steadyAnchor(SC, 0, 30, 3), tip: steadyAnchor(SC, 0, 0, 3), legs: anchor(body, 24, 16, 0), knob: steadyAnchor(SC, 4, 86, 0) };
     R.setS0 = (S0) => {
       if (R.S0 === S0 && R.vMat.map) return;
       R.S0 = S0; if (R.vMat.map) R.vMat.map.dispose();
@@ -482,7 +493,7 @@ export function createEngine() {
     VIEW.el = (rig.mode === 'free' ? 60 : 33) * DEG;
     const fb = new THREE.Box3(); rig.focusObjs().forEach((o) => fb.expandByObject(o)); const c = fb.getCenter(new THREE.Vector3());
     if (E.mode === 'lab') c.y -= (fb.max.y - fb.min.y) * 0.18;
-    const room = labels.length && !thumbAspect ? (root.clientWidth < 560 ? 0.8 : 0.74) : 1; // space around the instrument for part labels
+    const room = labels.length && lastSpec && lastSpec.room && !thumbAspect ? (root.clientWidth < 560 ? 0.8 : 0.74) : 1; // space around the instrument for part labels
     camHome = { target: c.clone(), zoom: fitZoom(fb, c, VIEW.az) * room, az: VIEW.az }; E.resetView();
   }
   E.resetView = () => {
@@ -507,6 +518,8 @@ export function createEngine() {
     const g = document.createElementNS(SVGNS, 'g'); g.setAttribute('class', 'arw'); g.style.setProperty('--cc', `var(--c${n})`);
     g.innerHTML = '<path class="halo"/><path class="halo-hd"/><path class="ln"/><path class="hd"/><circle class="tail" r="3.2"/>';
     arrowSvg.appendChild(g);
+    el.style.setProperty('--i', labels.length); g.style.setProperty('--i', labels.length);
+    g.querySelectorAll('.halo, .ln').forEach((pth) => pth.setAttribute('pathLength', '1'));
     const l = { el, g, target, key, pinKey: `${E.rig ? E.rig.type : ''}:${key}`, px: 0, py: 0 };
     labels.push(l);
     // Drag a tag to move it. Pointer events stop here, so dragging a tag never turns the 3D view.
@@ -531,6 +544,8 @@ export function createEngine() {
     el.addEventListener('pointerleave', () => { if (!drag) g.classList.remove('hl'); });
   }
   E.resetLabels = () => pins.clear();
+  E.labelsOn = true;
+  E.setLabelsVisible = (on) => { E.labelsOn = !!on; coLayer.classList.toggle('lbl-off', !on); };
   E.resetAll = () => { pins.clear(); E.resetView(); };
   function clearLabels() { labels.splice(0).forEach((l) => { l.el.remove(); l.g.remove(); }); coIdx = 0; }
   E.highlight = (key) => labels.forEach((l) => { const on = key != null && l.key === key; l.el.classList.toggle('hl', on); l.g.classList.toggle('hl', on); });
@@ -556,6 +571,7 @@ export function createEngine() {
   let obsCache = null, obsT = 0;
   function updLabels() {
     if (!labels.length || !E.rig) return;
+    updFollowers();
     const w = root.clientWidth, h = root.clientHeight; if (!w || !h) return;
     const now = performance.now(); if (!obsCache || now - obsT > 500) { obsCache = obstacles(); obsT = now; }
     const box = instrumentRect(w, h); const GAP = w < 560 ? 14 : 26, PAD = 8;

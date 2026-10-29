@@ -28,6 +28,8 @@ const Icon = {
   rotR: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M20 12a8 8 0 1 1-2.5-5.8" /><path d="M20 4v4h-4" /></svg>,
   out: <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M5 12h14" /></svg>,
   in: <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M5 12h14M12 5v14" /></svg>,
+  tagOn: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><path d="M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-8.1 8.1a1.5 1.5 0 0 1-2.12 0l-6.9-6.9A1.5 1.5 0 0 1 3 12.6Z" /><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none" /></svg>,
+  tagOff: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"><path d="M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-8.1 8.1a1.5 1.5 0 0 1-2.12 0l-6.9-6.9A1.5 1.5 0 0 1 3 12.6Z" opacity=".45" /><path d="M3 3l18 18" /></svg>,
   home: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 5l2.6 7H9.4Z" fill="var(--c6)" stroke="none" /><path d="M12 19l-2.6-7h5.2Z" fill="currentColor" stroke="none" /></svg>,
 };
 
@@ -40,6 +42,10 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
   const [loupeMin, setLoupeMin] = useState(false);
   const eng = getEngine();
   const specKey = JSON.stringify(spec);
+  // Show / hide part labels: one setting for every 3D view, remembered on this device.
+  const [labelsOn, setLabelsOn] = useState(() => { try { return localStorage.getItem('lp-labels') !== '0'; } catch { return true; } });
+  const toggleLabels = () => setLabelsOn((v) => { const n = !v; try { localStorage.setItem('lp-labels', n ? '1' : '0'); } catch { /* private mode */ } return n; });
+  useEffect(() => { eng.setLabelsVisible(labelsOn); }, [labelsOn, specKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     eng.setMode(mode);
@@ -78,6 +84,12 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
         <button type="button" aria-label="Zoom in" onClick={() => eng.zoomBy(1.25)}>{Icon.in}</button>
         <span className="dv" />
         <button type="button" aria-label={u('resetView')} onClick={() => eng.resetAll()}>{Icon.home}</button>
+        {spec.labels && spec.labels.length ? (
+          <>
+            <span className="dv" />
+            <button type="button" className={`lbl-btn${labelsOn ? ' on' : ''}`} aria-pressed={labelsOn} aria-label={labelsOn ? u('hideLabels') : u('showLabels')} title={labelsOn ? u('hideLabels') : u('showLabels')} onClick={toggleLabels}>{labelsOn ? Icon.tagOn : Icon.tagOff}</button>
+          </>
+        ) : null}
       </div>
       {mode === 'hero' && cta ? <div className="hero-cta">{cta}</div> : null}
       {mode === 'lab' ? (

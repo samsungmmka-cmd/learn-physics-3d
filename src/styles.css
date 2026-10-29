@@ -409,3 +409,20 @@ td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-var
 .co:hover .pill{background:var(--cc);color:#fff;border-left-color:#fff}
 .co:hover .pill .grip,.co.hl .pill .grip{background-image:radial-gradient(circle,#fff 1.1px,transparent 1.3px);opacity:.8}
 @media (max-width:560px){ .co .pill{gap:5px} .co .pill .grip{height:11px} }
+
+/* Show / hide part labels (toolbar button + animation).
+   Showing: arrows draw out from the tag towards the part, then the tag pops in; staggered per label.
+   Hiding: the reverse, quicker. */
+.tools .lbl-btn.on{color:var(--accent)}
+.co .pill{transition:opacity .26s ease, transform .32s cubic-bezier(.2,.9,.3,1.25);transition-delay:calc(var(--i, 0) * 45ms + 90ms);transform-origin:left center}
+.co-arrows .arw{transition:opacity .25s ease;transition-delay:calc(var(--i, 0) * 45ms)}
+.co-arrows .ln,.co-arrows .halo{stroke-dasharray:1 1;stroke-dashoffset:0;transition:stroke-dashoffset .42s cubic-bezier(.3,.7,.2,1);transition-delay:calc(var(--i, 0) * 45ms)}
+.co-arrows .hd,.co-arrows .halo-hd,.co-arrows .tail{transition:opacity .2s ease;transition-delay:calc(var(--i, 0) * 45ms + 260ms)}
+.co-layer.lbl-off .co{pointer-events:none}
+.co-layer.lbl-off .co .pill{opacity:0;transform:scale(.55) translateY(6px);transition-duration:.18s,.2s;transition-delay:calc(var(--i, 0) * 25ms)}
+.co-layer.lbl-off .co-arrows .ln,.co-layer.lbl-off .co-arrows .halo{stroke-dashoffset:1;transition-duration:.25s;transition-delay:calc(var(--i, 0) * 25ms + 60ms)}
+.co-layer.lbl-off .co-arrows .hd,.co-layer.lbl-off .co-arrows .halo-hd,.co-layer.lbl-off .co-arrows .tail{opacity:0;transition-delay:calc(var(--i, 0) * 25ms)}
+.co-layer.lbl-off .co-arrows .arw{opacity:0;transition-delay:calc(var(--i, 0) * 25ms + 280ms)}
+@media (prefers-reduced-motion:reduce){
+  .co .pill,.co-arrows .arw,.co-arrows .ln,.co-arrows .halo,.co-arrows .hd,.co-arrows .halo-hd,.co-arrows .tail{transition:none!important}
+}

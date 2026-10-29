@@ -20,6 +20,10 @@ export function sceneSpec(st, hero, theoryE, L, u, lang) {
   let e = 0;
   if (type === 'caliper') e = id === 1 ? (sec === 1 && theoryE !== null ? theoryE : ls.e) : 0;
   if (type === 'micro') e = sec === 1 && theoryE !== null ? theoryE : ls.e;
-  const labels = sec === 0 ? lab.parts.map(([k, n]) => [k, L(n)]) : [];
-  return { spec: { type, place, e, S0: ls.S0, labels, zeroAt, hint }, hud, sub };
+  // Part labels on every page, for the instrument actually on screen (practical 3 also uses the caliper).
+  // The show/hide button decides whether they're visible. Only the parts view zooms out to make room.
+  const partsLab = type === lab.inst ? lab : Object.values(LABS).find((x) => x.inst === type);
+  const labels = partsLab ? partsLab.parts.map(([k, n]) => [k, L(n)]) : [];
+  const room = sec === 0;
+  return { spec: { type, place, e, S0: ls.S0, labels, room, zeroAt, hint }, hud, sub };
 }
