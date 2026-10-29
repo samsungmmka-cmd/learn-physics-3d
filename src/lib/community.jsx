@@ -18,6 +18,7 @@ export function CommunityProvider({ children }) {
   const [classProgress, setClassProgress] = useState([]);
   const [authMode, setAuthMode] = useState('in');
   const [focus, setFocus] = useState(null);
+  const [focusPost, setFocusPost] = useState(null); // discussion post opened from the profile page
   const [recovery, setRecovery] = useState(null); // { access_token, refresh_token } from a reset-password email link
   const [authNotice, setAuthNotice] = useState(null); // e.g. 'linkExpired'
 
@@ -91,7 +92,7 @@ export function CommunityProvider({ children }) {
   const wrap = (fn) => async (...a) => { try { await fn(...a); loadAll(); return null; } catch (e) { return e; } };
 
   const value = useMemo(() => ({
-    enabled, ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, online: 0, reload: loadAll, focus, setFocus, authMode, setAuthMode, recovery, authNotice, setAuthNotice,
+    enabled, ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, online: 0, reload: loadAll, focus, setFocus, focusPost, setFocusPost, authMode, setAuthMode, recovery, authNotice, setAuthNotice,
     signUp: async (form) => { try { const d = await API.signUp(form); return { ok: true, needsConfirmation: !!d.needsConfirmation }; } catch (e) { return { error: e }; } },
     signIn: async (email, password) => { try { await API.signIn(email, password); return null; } catch (e) { return e; } },
     forgot: async (email) => { try { await API.forgotPassword(email); return null; } catch (e) { return e; } },
@@ -109,7 +110,7 @@ export function CommunityProvider({ children }) {
     getAssignment: (id) => API.api('GET', `/assignments/${id}`),
     addComment: (id, body) => API.api('POST', `/assignments/${id}/comments`, { body }),
     delComment: (id) => API.api('DELETE', `/comments/${id}`),
-  }), [enabled, ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, focus, authMode, recovery, authNotice, loadAll]); // eslint-disable-line react-hooks/exhaustive-deps
+  }), [enabled, ready, session, uid, me, teacher, profiles, posts, results, assignments, classProgress, focus, focusPost, authMode, recovery, authNotice, loadAll]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

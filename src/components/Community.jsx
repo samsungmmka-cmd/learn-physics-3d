@@ -41,7 +41,7 @@ export function PostItem({ p, compact, onReply, children }) {
   const prof = comm.profiles[p.author];
   const text = compact && p.body.length > 160 ? `${p.body.slice(0, 160)}…` : p.body;
   return (
-    <div className="post">
+    <div className={`post${!compact && comm.focusPost === p.id ? ' focus' : ''}`} id={compact ? undefined : `post-${p.id}`}>
       <Avatar id={p.author} name={prof?.name} size={compact ? 36 : 40} />
       <div>
         <div className="meta"><b>{nameOf(p.author)}</b>{prof?.role === 'teacher' ? <span className="tagT">{u('teacher')}</span> : null}<span className="tagP">{pracTag(p.prac, u)}</span><span className="muted">{ago(p.created_at)}</span></div>
@@ -374,6 +374,14 @@ export default function Community() {
   const { u } = useT(); const comm = useCommunity();
   const [sub, setSub] = useState(comm.focus ? 'assign' : 'discuss');
   useEffect(() => { if (comm.focus) setSub('assign'); }, [comm.focus]);
+  // Opened from the profile page on a specific post: show the discussion and scroll to it.
+  useEffect(() => {
+    if (!comm.focusPost) return undefined;
+    setSub('discuss');
+    const t1 = setTimeout(() => { const el = document.getElementById(`post-${comm.focusPost}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
+    const t2 = setTimeout(() => comm.setFocusPost(null), 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [comm.focusPost]); // eslint-disable-line react-hooks/exhaustive-deps
   const [nm, setNm] = useState('');
   const tabs = [['discuss', u('discuss')], ['results', u('classResults')], ['progress', u('classProg')], ['assign', u('assignments')]];
   let body;

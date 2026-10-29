@@ -120,3 +120,44 @@ Object.assign(UI, {
 });
 
 Object.assign(UI, { findPrac: { si: 'පරීක්ෂණයක් සොයන්න', en: 'Find a practical' } });
+
+// Profile page
+Object.assign(UI, {
+  pfMyProfile: { si: 'මගේ පැතිකඩ', en: 'My profile' },
+  editName: { si: 'නම වෙනස් කරන්න', en: 'Edit name' },
+  pfSignedOut: { si: 'ඔබේ ප්‍රගතිය මෙම උපාංගයේ සුරැකේ. පැවරුම් සහ දැනුම්දීම් සඳහා පුරනය වන්න.', en: 'Your practical progress is saved on this device. Sign in for assignments and notifications.' },
+  pfSummary: { si: 'සාරාංශය', en: 'Summary' },
+  pfPracDone: { si: 'අවසන් කළ පරීක්ෂණ', en: 'Practicals done' },
+  pfInProgress: { si: 'ක්‍රියාත්මකයි', en: 'in progress' },
+  pfAsgDone: { si: 'අවසන් කළ පැවරුම්', en: 'Assignments done' },
+  pfAsgPending: { si: 'ඉතිරි පැවරුම්', en: 'Pending' },
+  pfEnrolledNotDone: { si: 'ලියාපදිංචියි, තවම අවසන් නැත', en: 'enrolled, not finished' },
+  pfAsgOpen: { si: 'නව පැවරුම්', en: 'Open to join' },
+  pfNotEnrolled: { si: 'තවම ලියාපදිංචි නැත', en: 'not enrolled yet' },
+  pfPublished: { si: 'පළ කළ පැවරුම්', en: 'Published' },
+  pfEnrolments: { si: 'ලියාපදිංචි වීම්', en: 'Enrolments' },
+  pfAcross: { si: 'ඔබේ සියලු පැවරුම්වල', en: 'across your assignments' },
+  pfCompletions: { si: 'අවසන් කිරීම්', en: 'Completions' },
+  pfAwaiting: { si: 'බලාපොරොත්තුවෙන්', en: 'still working' },
+  pfNotif: { si: 'දැනුම්දීම්', en: 'Notifications' },
+  pfUnread: { si: 'නොකියවූ', en: 'unread' },
+  pfMarkRead: { si: 'සියල්ල කියවූ ලෙස සලකුණු කරන්න', en: 'Mark all read' },
+  pfNoNotif: { si: 'තවම දැනුම්දීම් නැත.', en: 'No notifications yet.' },
+  nReplied: { si: 'ඔබේ පළ කිරීමට පිළිතුරු දුන්නා:', en: 'replied to your post' },
+  nDue: { si: 'ඉක්මනින් නියමිතයි:', en: 'Due soon:' },
+  nNew: { si: 'නව පැවරුම:', en: 'New assignment:' },
+  nCompleted: { si: 'සිසුන් අවසන් කළා:', en: 'students completed' },
+  pfMyPrac: { si: 'මගේ පරීක්ෂණ', en: 'My practicals' },
+  pfOpen: { si: 'විවෘතයි', en: 'Open' },
+  pfResponses: { si: 'මගේ පළ කිරීම්වලට පිළිතුරු', en: 'Responses to my posts' },
+  pfNoPosts: { si: 'ඔබ තවම කිසිවක් පළ කර නැත.', en: 'You haven’t posted yet.' },
+  pfReplies: { si: 'පිළිතුරු', en: 'replies' },
+  pfClass: { si: 'මගේ පන්තිය', en: 'My class' },
+  pfClassAsg: { si: 'පන්තියේ පැවරුම්', en: 'class assignments' },
+  pfClassPosts: { si: 'සාකච්ඡා', en: 'discussions' },
+  pfClassMembers: { si: 'ක්‍රියාකාරී සාමාජිකයන්', en: 'active members' },
+});
+
+Object.assign(UI, { dueToday: { si: 'අද නියමිතයි', en: 'Due today' } });
+
+Object.assign(UI, { pfReply: { si: 'පිළිතුර', en: 'reply' } });

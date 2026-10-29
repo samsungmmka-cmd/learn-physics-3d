@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useT } from '../lib/i18n.jsx';
 import { useCommunity } from '../lib/community.jsx';
+import { useNotifications } from '../lib/notifications.js';
 
 export const initials = (s) => (s || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
@@ -16,7 +16,7 @@ export function Avatar({ name, size = 34, signedIn = true }) {
   );
 }
 
-function LangSwitch() {
+export function LangSwitch() {
   const { lang, setLang, u } = useT();
   return (
     <div className="um-lang" role="group" aria-label={u('langTitle')}>
@@ -29,44 +29,11 @@ function LangSwitch() {
   );
 }
 
-function ProfileDialog({ onClose }) {
-  const { u } = useT(); const comm = useCommunity();
-  const [name, setName] = useState(comm.me?.name || '');
-  const [state, setState] = useState(null);
-  useEffect(() => { const k = (e) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
-  const save = async (e) => {
-    e.preventDefault(); if (!name.trim()) return; setState('busy');
-    const err = await comm.rename(name.trim().slice(0, 60)); setState(err ? 'err' : 'ok');
-  };
-  return (
-    <div className="sheet" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <form role="dialog" aria-modal="true" aria-labelledby="profH" className="profile" onSubmit={save}>
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <h3 id="profH" className="sec-h" style={{ fontSize: 22 }}>{u('profile')}</h3>
-          <button type="button" className="link" onClick={onClose}>{u('close')}</button>
-        </div>
-        <div className="prof-top">
-          <Avatar name={name || comm.me?.email} size={56} />
-          <div style={{ minWidth: 0 }}>
-            <b className="prof-n">{comm.me?.name || '—'}</b>
-            <div className="muted prof-e">{comm.me?.email}</div>
-            <span className={comm.teacher ? 'tagT' : 'stTag'}>{comm.teacher ? u('roleTeacher') : u('roleStudent')}</span>
-          </div>
-        </div>
-        <label className="fld"><span>{u('yourName')}</span><input id="profName" value={name} maxLength={60} required onChange={(e) => { setName(e.target.value); setState(null); }} autoComplete="name" /></label>
-        <label className="fld"><span>{u('email')}</span><input id="profEmail" value={comm.me?.email || ''} readOnly disabled /></label>
-        <div className="row"><button type="submit" className="btn" disabled={state === 'busy'} aria-busy={state === 'busy'}>{u('saveName')}</button></div>
-        {state === 'ok' ? <p className="fb good" role="status">{u('profileSaved')}</p> : state === 'err' ? <p className="fb bad" role="status">{u('postErr')}</p> : null}
-      </form>
-    </div>
-  );
-}
-
 // Avatar button in the navigation bar; opens the account menu (profile, language, sign in/out).
 export default function UserMenu({ go, current }) {
   const { u } = useT(); const comm = useCommunity();
   const [open, setOpen] = useState(false);
-  const [profile, setProfile] = useState(false);
+  const notif = useNotifications();
   const wrap = useRef(null);
   useEffect(() => {
     if (!open) return undefined;
@@ -80,10 +47,9 @@ export default function UserMenu({ go, current }) {
   const toAuth = (m) => { setOpen(false); comm.setAuthMode(m); go('comm'); };
   return (
     <div className="um" ref={wrap}>
-      <button type="button" className={`um-btn${open ? ' open' : ''}`} aria-haspopup="menu" aria-expanded={open} aria-current={current ? 'page' : undefined} onClick={() => setOpen((v) => !v)}>
-        <Avatar name={name} size={30} signedIn={signedIn} />
-        <span className="um-name">{signedIn ? (comm.me?.name || u('profile')) : u('signInTab')}</span>
-        <svg className="um-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+      <button type="button" className={`um-btn${open ? ' open' : ''}`} aria-haspopup="menu" aria-expanded={open} aria-current={current ? 'page' : undefined}
+        aria-label={`${signedIn ? name : u('signInTab')}${notif.unread ? ` · ${notif.unread} ${u('pfUnread')}` : ''}`} title={signedIn ? name : u('account')} onClick={() => setOpen((v) => !v)}>
+        <span className="um-av"><Avatar name={name} size={34} signedIn={signedIn} />{notif.unread ? <span className="um-dot" aria-hidden="true">{notif.unread > 9 ? '9+' : notif.unread}</span> : null}</span>
       </button>
       {open ? (
         <div className="um-pop" role="menu" aria-label={u('account')}>
@@ -96,8 +62,8 @@ export default function UserMenu({ go, current }) {
             </div>
           </div>
           {signedIn ? (
-            <button type="button" role="menuitem" className="um-item" onClick={() => { setOpen(false); setProfile(true); }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="8.5" r="3.6" /><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6" /></svg>{u('profile')}
+            <button type="button" role="menuitem" className="um-item" onClick={() => { setOpen(false); go('profile'); }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="8.5" r="3.6" /><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6" /></svg>{u('pfMyProfile')}{notif.unread ? <span className="cnt acc" style={{ marginLeft: 'auto' }}>{notif.unread}</span> : null}
             </button>
           ) : (
             <div className="um-auth">
@@ -113,7 +79,6 @@ export default function UserMenu({ go, current }) {
           ) : null}
         </div>
       ) : null}
-      {profile ? createPortal(<ProfileDialog onClose={() => setProfile(false)} />, document.body) : null}
     </div>
   );
 }

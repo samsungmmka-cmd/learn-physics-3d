@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useT } from './lib/i18n.jsx';
 import { useLab } from './lib/labStore.jsx';
 import { useCommunity } from './lib/community.jsx';
@@ -10,6 +10,7 @@ import PracticalList from './components/PracticalList.jsx';
 import Lab from './components/Lab.jsx';
 import Community from './components/Community.jsx';
 import UserMenu from './components/UserMenu.jsx';
+import Profile from './components/Profile.jsx';
 import GlobalLoader from './components/GlobalLoader.jsx';
 
 const NAV = [
@@ -41,9 +42,15 @@ export default function App() {
   const done = Object.keys(LABS).filter((id) => progress(st, +id) >= 0.999).length;
   const part = Object.keys(LABS).reduce((s, id) => s + progress(st, +id), 0);
   useEffect(() => { document.body.dataset.view = view; }, [view]);
-  // Once the page scrolls, the navigation bar takes a slightly different tint so it stands apart from the content.
+  // The navigation bar changes tint once it is pinned at the top with page content scrolling under it
+  // (on phones the bar sits at the bottom, so it changes as soon as content runs under it).
+  const navRef = useRef(null);
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 12);
+    const on = () => {
+      const n = navRef.current; if (!n) return;
+      const wide = window.matchMedia('(min-width:900px)').matches;
+      setScrolled(wide ? window.scrollY > 0 && n.getBoundingClientRect().top <= parseFloat(getComputedStyle(n).top || '0') + 0.5 : window.scrollY > 4);
+    };
     on(); window.addEventListener('scroll', on, { passive: true });
     return () => window.removeEventListener('scroll', on);
   }, []);
@@ -66,20 +73,21 @@ export default function App() {
         </div>
         <Clock />
       </section>
-      <nav className={`nav${scrolled ? ' scrolled' : ''}`} aria-label="Main">
+      <nav ref={navRef} className={`nav${scrolled ? ' scrolled' : ''}`} aria-label="Main">
         {NAV.map(([k, t, ic]) => (
           <button key={k} type="button" aria-current={view === k ? 'page' : undefined} onClick={() => go(k)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">{ic}</svg>
             <span>{u(t)}</span>
           </button>
         ))}
-        <UserMenu go={go} />
+        <UserMenu go={go} current={view === 'profile'} />
       </nav>
       <main>
         {view === 'home' && <Home go={go} />}
         {view === 'list' && <PracticalList go={go} />}
         {view === 'lab' && <Lab />}
         {view === 'comm' && <Community go={go} />}
+        {view === 'profile' && <Profile go={go} />}
       </main>
       <GlobalLoader />
     </div>
