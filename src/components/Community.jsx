@@ -348,7 +348,7 @@ export default function Community() {
   else body = sub === 'discuss' ? <Discussion /> : sub === 'results' ? <ClassResults /> : sub === 'progress' ? <ClassProgress /> : <Assignments />;
   const needName = comm.uid && comm.me && !comm.me.name;
   return (
-    <div style={{ display: 'grid', gap: 14 }}>
+    <div className="comm-page">
       <div className="rowh">
         <h2 className="sec-h">{u('navComm')}</h2>
         {comm.uid ? <span className="row"><span className="muted">{comm.me?.name || comm.me?.email}{comm.teacher ? ` · ${u('teacher')}` : ''}</span><button type="button" className="link" onClick={comm.signOut}>{u('signOut')}</button></span> : null}

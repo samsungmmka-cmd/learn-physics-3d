@@ -122,9 +122,9 @@ html[lang="si"] .loupe .lh{letter-spacing:0;text-transform:none;font-family:var(
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .sec-h{font-size:28px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
 html[lang="si"] .sec-h{text-transform:none;font-size:24px}
-.rowh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rowh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px}
 .link{border:0;background:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;display:grid;gap:12px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
 .card h3{font-size:20px;text-transform:uppercase;letter-spacing:.03em}
 html[lang="si"] .card h3{text-transform:none;font-size:17px}
 .muted{color:var(--muted)}
@@ -233,7 +233,7 @@ td input.num{width:86px;padding:4px 6px;font-size:13px}
 .ctrl output{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:700}
 .ctrl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
 textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--paper);resize:vertical}
-select{padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
+select{padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);max-width:100%;min-width:0;text-overflow:ellipsis}
 svg.fig{width:100%;max-width:340px;height:auto;display:block}
 
 /* community */
@@ -253,7 +253,7 @@ svg.fig{width:100%;max-width:340px;height:auto;display:block}
 .replies .post img.av{width:30px;height:30px}
 .tagP{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;padding:2px 7px;border-radius:6px;background:var(--info);color:var(--ink2)}
 .tagT{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;padding:2px 7px;border-radius:6px;background:var(--accent);color:var(--accent-ink);text-transform:uppercase}
-.compose{display:grid;gap:8px}
+.compose{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
 .strip{width:100%;height:auto;display:block}
 .prog-t td.pc{font-weight:700}
 .minibar{display:inline-block;width:60px;height:6px;border-radius:99px;background:var(--line);vertical-align:middle;margin-left:6px;overflow:hidden}
@@ -271,7 +271,7 @@ body[data-view="lab"] .status{display:none}
 @media (max-width:1100px){
   .labgrid{grid-template-columns:1fr}
   .labstage{position:relative;top:auto;height:66vh;min-height:470px}
-  .comm-grid{grid-template-columns:1fr}
+  .comm-grid{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:760px){
   .hdr{flex-wrap:nowrap}.hereNow{display:none!important}
@@ -331,3 +331,46 @@ body[data-view="lab"] .status{display:none}
 .acct-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .auth{margin-inline:auto;width:100%}
 @media (max-width:560px){.acct-btns .btn.ghost{display:none}}
+
+/* Community controls on small screens: nothing may push past the card edge */
+.compose>.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
+.compose>.row>select{flex:1 1 180px}
+.compose>.row>.btn{flex:0 0 auto}
+.post>div{min-width:0}
+.post .txt{overflow-wrap:anywhere}
+.empty{overflow-wrap:anywhere}
+.ai>div{min-width:0}
+.ai b{overflow-wrap:anywhere}
+.fld{min-width:0}
+.fld input,.fld select,.fld textarea{width:100%;max-width:100%}
+.ctabs .chip{white-space:nowrap}
+@media (max-width:560px){
+  .card{padding:14px}
+  .compose>.row>select{flex-basis:100%}
+  .chips{gap:6px}
+}
+.comm-page{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
+.comm-page>.rowh>.row{min-width:0;justify-content:flex-end}
+.comm-page>.rowh>.row>.muted{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
+/* page shell + header: never wider than the screen */
+.shell{grid-template-columns:minmax(0,1fr)}
+.hdr{flex-wrap:nowrap;min-width:0}
+.hdr .wordmark{min-width:0}
+.hdr .logo{flex:0 0 auto}
+.hdr .sp{min-width:0}
+.acct{flex:0 1 auto;min-width:0}
+.acct .tagT{flex:0 0 auto}
+.acct-btns{flex:0 0 auto}
+@media (max-width:420px){
+  .hdr{gap:10px}
+  .wordmark .tag{display:none}
+  .acct{max-width:38vw;padding:5px 10px}
+}
+@media (max-width:420px){ .acct .tagT{display:none} .acct{max-width:34vw} }
+@media (max-width:420px){ .wordmark h1{font-size:27px} .hdr .logo{width:40px;height:40px} .acct{max-width:42vw} }
+.acct-i{display:none}
+@media (max-width:420px){
+  .acct{padding:0;border-radius:50%;max-width:none;width:40px;height:40px;justify-content:center;flex:0 0 40px}
+  .acct-n{display:none}
+  .acct-i{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:15px}
+}

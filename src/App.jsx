@@ -50,7 +50,7 @@ export default function App() {
         <span className="sp" />
         {comm.online > 0 ? <div className="hereNow"><i /><span>{comm.online} {u('hereNow')}</span></div> : null}
         {comm.uid
-          ? <button type="button" className="acct" onClick={() => go('comm')}><span className="acct-n">{comm.me?.name || comm.me?.email}</span>{comm.teacher ? <span className="tagT">{u('teacher')}</span> : null}</button>
+          ? <button type="button" className="acct" aria-label={comm.me?.name || comm.me?.email} onClick={() => go('comm')}><span className="acct-i" aria-hidden="true">{(comm.me?.name || comm.me?.email || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</span><span className="acct-n">{comm.me?.name || comm.me?.email}</span>{comm.teacher ? <span className="tagT">{u('teacher')}</span> : null}</button>
           : <div className="acct-btns"><button type="button" className="btn ghost sm" onClick={() => { comm.setAuthMode('in'); go('comm'); }}>{u('signInTab')}</button><button type="button" className="btn sm" onClick={() => { comm.setAuthMode('up'); go('comm'); }}>{u('signUpTab')}</button></div>}
       </header>
       <section className="status" aria-label={u('stLabel')}>
