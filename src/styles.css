@@ -7,8 +7,8 @@
   --c1:#E3A91C; --c2:#2E6CD6; --c3:#8E45CB; --c4:#F26B1D; --c5:#2A9A5A; --c6:#D0453A;
   --shadow:0 1px 0 rgba(90,65,30,.05),0 10px 28px -16px rgba(90,65,30,.35);
   --f-disp:"Barlow Condensed","Noto Sans Sinhala","Arial Narrow",sans-serif;
-  --f-body:"Barlow Condensed","Noto Sans Sinhala","Arial Narrow",sans-serif;
-  --f-mono:"Barlow Condensed","Noto Sans Sinhala","Arial Narrow",sans-serif;
+  --f-body:"JetBrains Mono","Noto Sans Sinhala",ui-monospace,Menlo,monospace;
+  --f-mono:"JetBrains Mono","Noto Sans Sinhala",ui-monospace,Menlo,monospace;
   --r:18px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -379,9 +379,10 @@ body[data-view="lab"] .status{display:none}
 .st-date.si{font-family:var(--f-body);letter-spacing:.02em;font-weight:600}
 .st-r{gap:2px 12px}
 
-/* One English font family: Barlow Condensed for everything (headings, body, forms, labels).
-   Sinhala text still falls through to Noto Sans Sinhala. Condensed letters are narrower, so
-   body text is a touch larger to stay easy to read. */
-body{font-size:16px}
+/* English text uses JetBrains Mono everywhere (body, buttons, forms, menus, labels), matching
+   the date/clock style; large headings keep Barlow Condensed. Sinhala falls through to
+   Noto Sans Sinhala. Monospace letters are wide, so running text is slightly smaller. */
+body{font-size:14px}
+html[lang="si"] body{font-size:15px}
 button,input,select,textarea,input::placeholder,textarea::placeholder{font-family:var(--f-body)}
 td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-variant-numeric:tabular-nums}
