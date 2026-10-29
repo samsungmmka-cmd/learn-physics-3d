@@ -494,8 +494,19 @@ export function createEngine() {
     const fb = new THREE.Box3(); rig.focusObjs().forEach((o) => fb.expandByObject(o)); const c = fb.getCenter(new THREE.Vector3());
     if (E.mode === 'lab') c.y -= (fb.max.y - fb.min.y) * 0.18;
     const room = labels.length && lastSpec && lastSpec.room && !thumbAspect ? (root.clientWidth < 560 ? 0.8 : 0.74) : 1; // space around the instrument for part labels
-    camHome = { target: c.clone(), zoom: fitZoom(fb, c, VIEW.az) * room, az: VIEW.az }; E.resetView();
+    camHome = { target: c.clone(), zoom: fitZoom(fb, c, VIEW.az) * room, az: VIEW.az, fb: fb.clone(), room }; E.resetView();
   }
+  // After the stage is resized (e.g. the user drags the panel divider): fit the instrument to the new
+  // width, keeping the user's own zoom level and rotation relative to the fitted view.
+  E.refit = () => {
+    if (!E.ok || !camHome || !camHome.fb) return; resize();
+    const pos = camera.position.clone(), q = camera.quaternion.clone();
+    const z = fitZoom(camHome.fb, camHome.target, camHome.az) * camHome.room;
+    camera.position.copy(pos); camera.quaternion.copy(q); camera.updateMatrixWorld(true);
+    if (!(z > 0)) return;
+    const ratio = z / camHome.zoom; camHome.zoom = z;
+    camera.zoom = Math.min(controls.maxZoom, Math.max(controls.minZoom, camera.zoom * ratio)); camera.updateProjectionMatrix();
+  };
   E.resetView = () => {
     if (!E.ok || !camHome) return; VIEW.az = camHome.az;
     camera.position.copy(camHome.target).addScaledVector(camDir(VIEW.az), 80); controls.target.copy(camHome.target);

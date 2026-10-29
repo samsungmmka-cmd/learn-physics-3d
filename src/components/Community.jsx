@@ -5,9 +5,16 @@ import { useCommunity } from '../lib/community.jsx';
 import { LABS, PRAC } from '../data/content.js';
 import { avg, shareKeys } from '../lib/calc.js';
 import { fmtDate } from '../lib/dates.js';
+import Combobox from './Combobox.jsx';
 
 const pracTag = (p, u) => (p ? `P${String(p).padStart(2, '0')}` : u('general'));
 const pracTitle = (id, lang) => { const p = PRAC.find((x) => x[0] === String(id)); return p ? (lang === 'si' ? p[2] : p[3]) : ''; };
+// Options for the practical pickers: label in the current language, searchable in English and by number.
+function pracOptions(ids, lang, u, first) {
+  const out = first ? [first] : [];
+  ids.forEach((id) => { const p = PRAC.find((x) => x[0] === String(id)); if (!p) return; out.push({ value: String(id), tag: pracTag(id, u), label: lang === 'si' ? p[2] : p[3], sub: lang === 'si' ? p[3] : undefined, search: `${p[0]} p${String(p[0]).padStart(2, '0')} ${p[3]}` }); });
+  return out;
+}
 const COLORS = ['#E3A91C', '#2E6CD6', '#8E45CB', '#F26B1D', '#2A9A5A', '#D0453A'];
 function hue(id) { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
 
@@ -140,7 +147,7 @@ function AuthCard() {
         </fieldset>
       ) : null}
       {mode === 'up' && f.role === 'teacher' ? <label className="fld"><span>{u('teacherCode')}</span><input required value={f.teacherCode} onChange={set('teacherCode')} autoComplete="off" /><small className="muted">{u('teacherCodeHelp')}</small></label> : null}
-      <div className="row"><button className="btn" type="submit" disabled={busy}>{buttons[mode]}</button></div>
+      <div className="row"><button className="btn" type="submit" disabled={busy} aria-busy={busy}>{buttons[mode]}</button></div>
       {msg ? <p className={`fb ${msg[0]}`} role="status">{msg[1]}</p> : null}
       {mode === 'in' || mode === 'up' ? <p className="muted" style={{ fontSize: 13.5 }}>{mode === 'in' ? u('noAcct') : u('haveAcct')} <button type="button" className="link" onClick={() => go(mode === 'in' ? 'up' : 'in')}>{mode === 'in' ? u('signUpTab') : u('signInTab')}</button></p> : null}
     </form>
@@ -186,10 +193,8 @@ function Discussion() {
         <div className="compose">
           <textarea aria-label={u('askPh')} placeholder={u('askPh')} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} />
           <div className="row">
-            <select aria-label="Practical" value={prac} onChange={(e) => setPrac(e.target.value)}>
-              <option value="0">{u('general')}</option>
-              {Object.keys(LABS).map((id) => <option key={id} value={id}>{pracTag(id, u)} · {pracTitle(id, lang)}</option>)}
-            </select>
+            <Combobox id="postPrac" label={u('aPrac')} placeholder={u('searchPrac')} value={prac} onChange={setPrac}
+              options={pracOptions(Object.keys(LABS), lang, u, { value: '0', label: u('general'), search: 'general all none 0' })} />
             <button type="button" className="btn" onClick={post}>{u('post')}</button>
           </div>
           {err ? <p className="fb bad">{err}</p> : null}
@@ -273,7 +278,7 @@ function AssignmentDetail({ id, onBack }) {
   const act = async (fn) => { setBusy(true); const e = await fn(); setBusy(false); if (e) setErr(errText(e, u)); else load(); };
   const comment = async (e) => { e.preventDefault(); if (!text.trim()) return; setBusy(true); try { await comm.addComment(id, text.trim()); setText(''); await load(); } catch (x) { setErr(errText(x, u)); } setBusy(false); };
   const delC = async (cid) => { try { await comm.delComment(cid); load(); } catch (x) { setErr(errText(x, u)); } };
-  if (!a) return <div className="card"><button type="button" className="link" onClick={onBack}>← {u('back')}</button>{err ? <p className="fb bad">{err}</p> : <div className="empty">…</div>}</div>;
+  if (!a) return <div className="card"><button type="button" className="link" onClick={onBack}>← {u('back')}</button>{err ? <p className="fb bad">{err}</p> : <div className="empty loading" role="status"><span className="spin" aria-hidden="true" />{u('loading')}</div>}</div>;
   const mine = a.my_enrollment; const isAuthor = a.created_by === comm.uid;
   return (
     <div className="card adetail">
@@ -286,22 +291,22 @@ function AssignmentDetail({ id, onBack }) {
       {a.description ? <p className="adesc">{a.description}</p> : null}
       {!comm.teacher ? (
         <div className="enrollBox">
-          {!mine ? <button type="button" className="btn" disabled={busy} onClick={() => act(() => comm.enroll(id))}>{u('enroll')}</button> : (
+          {!mine ? <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.enroll(id))}>{u('enroll')}</button> : (
             <>
               <div className="row"><span className={`stTag${mine.status === 'completed' ? ' done' : ''}`}>{mine.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span>{mine.completed_at ? <span className="muted">{ago(mine.completed_at)}</span> : null}</div>
               <textarea aria-label={u('doneNote')} placeholder={u('doneNote')} maxLength={1000} style={{ minHeight: 60 }} value={note} onChange={(e) => setNote(e.target.value)} />
               <div className="row">
                 {mine.status === 'completed'
-                  ? <button type="button" className="btn ghost sm" disabled={busy} onClick={() => act(() => comm.complete(id, note, false))}>{u('undoDone')}</button>
-                  : <button type="button" className="btn" disabled={busy} onClick={() => act(() => comm.complete(id, note, true))}>{u('markDone')}</button>}
-                {mine.status !== 'completed' ? <button type="button" className="btn ghost sm" disabled={busy} onClick={() => act(() => comm.leave(id))}>{u('leaveA')}</button> : null}
+                  ? <button type="button" className="btn ghost sm" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.complete(id, note, false))}>{u('undoDone')}</button>
+                  : <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.complete(id, note, true))}>{u('markDone')}</button>}
+                {mine.status !== 'completed' ? <button type="button" className="btn ghost sm" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.leave(id))}>{u('leaveA')}</button> : null}
               </div>
             </>
           )}
         </div>
       ) : (
-        <div>
-          <div className="rowh"><h3>{u('studentsList')}</h3>{isAuthor ? <button type="button" className="btn sm ghost" onClick={async () => { if (!armed) { setArmed(true); return; } const e = await comm.delAssignment(id); if (e) setErr(errText(e, u)); else { comm.setFocus(null); onBack(); } }}>{armed ? u('confirm') : u('del')}</button> : null}</div>
+        <div className="dsec">
+          <div className="rowh"><h3 className="dsec-h">{u('studentsList')}</h3>{isAuthor ? <button type="button" className="btn sm ghost" onClick={async () => { if (!armed) { setArmed(true); return; } const e = await comm.delAssignment(id); if (e) setErr(errText(e, u)); else { comm.setFocus(null); onBack(); } }}>{armed ? u('confirm') : u('del')}</button> : null}</div>
           {a.enrollments && a.enrollments.length ? (
             <div className="tbl-wrap"><table><thead><tr><th>{u('student')}</th><th>{u('colStatus')}</th><th>{u('colNote')}</th></tr></thead><tbody>
               {a.enrollments.map((e) => <tr key={e.student_id}><td className="lab">{e.student_name || u('someone')}</td><td><span className={`stTag${e.status === 'completed' ? ' done' : ''}`}>{e.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span></td><td style={{ fontFamily: 'var(--f-body)', textAlign: 'left' }}>{e.note}</td></tr>)}
@@ -309,8 +314,8 @@ function AssignmentDetail({ id, onBack }) {
           ) : <div className="empty">{u('noEnrolled')}</div>}
         </div>
       )}
-      <div>
-        <h3>{u('comments')} <span className="muted mono">{a.comments.length}</span></h3>
+      <div className="dsec">
+        <h3 className="dsec-h">{u('comments')} <span className="cnt">{a.comments.length}</span></h3>
         {a.comments.length ? a.comments.map((c) => (
           <div className="post" key={c.id}>
             <Avatar id={c.author} name={c.author_name} size={34} />
@@ -323,7 +328,7 @@ function AssignmentDetail({ id, onBack }) {
         )) : <div className="empty">{u('noComments')}</div>}
         <form className="compose" onSubmit={comment}>
           <textarea aria-label={u('commentPh')} placeholder={u('commentPh')} maxLength={1000} style={{ minHeight: 60 }} value={text} onChange={(e) => setText(e.target.value)} />
-          <div className="row"><button type="submit" className="btn sm" disabled={busy}>{u('send')}</button></div>
+          <div className="row"><button type="submit" className="btn sm" disabled={busy} aria-busy={busy}>{u('send')}</button></div>
         </form>
       </div>
       {err ? <p className="fb bad">{err}</p> : null}
@@ -349,11 +354,14 @@ function Assignments() {
           <h3>{u('newAssign')}</h3>
           <label className="fld"><span>{u('aTitle')}</span><input required maxLength={120} value={f.title} onChange={set('title')} /></label>
           <div className="row">
-            <label className="fld"><span>{u('aPrac')}</span><select value={f.prac} onChange={set('prac')}><option value="">{u('none')}</option>{PRAC.filter((p) => /^\d+$/.test(p[0])).map((p) => <option key={p[0]} value={p[0]}>{pracTag(p[0], u)} · {lang === 'si' ? p[2] : p[3]}</option>)}</select></label>
+            <div className="fld"><label htmlFor="aPracSel">{u('aPrac')}</label>
+              <Combobox id="aPracSel" label={u('aPrac')} placeholder={u('searchPrac')} value={f.prac} onChange={(v) => setF({ ...f, prac: v })}
+                options={pracOptions(PRAC.filter((p) => /^\d+$/.test(p[0])).map((p) => p[0]), lang, u, { value: '', label: u('none'), search: 'none no practical' })} />
+            </div>
             <label className="fld"><span>{u('due')}</span><input type="date" className="date" value={f.due} onChange={set('due')} /></label>
           </div>
           <label className="fld"><span>{u('aDesc')}</span><textarea maxLength={2000} style={{ minHeight: 72 }} value={f.description} onChange={set('description')} /></label>
-          <div className="row"><button type="submit" className="btn" disabled={busy}>{u('publish')}</button></div>
+          <div className="row"><button type="submit" className="btn" disabled={busy} aria-busy={busy}>{u('publish')}</button></div>
           {err ? <p className="fb bad">{err}</p> : null}
         </form>
       ) : null}

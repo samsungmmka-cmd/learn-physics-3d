@@ -17,7 +17,17 @@ export const onSession = (fn) => { listeners.add(fn); return () => listeners.del
 
 export class ApiError extends Error { constructor(status, code, message) { super(message || code); this.status = status; this.code = code; } }
 
+// Requests in flight, so the UI can show a loading indicator (it does not change any request).
+let pending = 0; const busyListeners = new Set();
+const setPending = (d) => { pending += d; busyListeners.forEach((fn) => fn(pending)); };
+export const onBusy = (fn) => { busyListeners.add(fn); return () => busyListeners.delete(fn); };
+export const isBusy = () => pending > 0;
+
 async function raw(method, path, body, token) {
+  setPending(1);
+  try { return await rawFetch(method, path, body, token); } finally { setPending(-1); }
+}
+async function rawFetch(method, path, body, token) {
   let res;
   try {
     res = await fetch(BASE + path, {

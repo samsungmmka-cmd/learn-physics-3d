@@ -9,14 +9,14 @@ import Home from './components/Home.jsx';
 import PracticalList from './components/PracticalList.jsx';
 import Lab from './components/Lab.jsx';
 import Community from './components/Community.jsx';
-import LangSheet from './components/LangSheet.jsx';
+import UserMenu from './components/UserMenu.jsx';
+import GlobalLoader from './components/GlobalLoader.jsx';
 
 const NAV = [
   ['home', 'navHome', <path key="h" d="M4 11 12 4l8 7v9h-5v-6H9v6H4Z" />],
   ['list', 'navList', [<path key="a" d="M3 6c3-1.3 6-1.3 9 1v13c-3-2.3-6-2.3-9-1Z" />, <path key="b" d="M21 6c-3-1.3-6-1.3-9 1v13c3-2.3 6-2.3 9-1Z" />]],
   ['lab', 'navLab', [<path key="a" d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3" />, <path key="b" d="M7.5 14h9" />]],
   ['comm', 'navComm', [<circle key="a" cx="8" cy="9" r="3" />, <circle key="b" cx="16.5" cy="10" r="2.5" />, <path key="c" d="M3 19c.6-3 2.6-5 5-5s4.4 2 5 5M13.5 19c.4-2.2 1.6-3.7 3-3.7s2.7 1.5 3.2 3.7" />]],
-  ['lang', 'navLang', [<circle key="a" cx="12" cy="12" r="9" />, <path key="b" d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3Z" />]],
 ];
 
 function Clock() {
@@ -35,12 +35,18 @@ export default function App() {
   const { u } = useT();
   const { st, update } = useLab();
   const comm = useCommunity();
-  const [langOpen, setLangOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const view = st.view;
   const go = (v) => { update((n) => { n.view = v; }, true); window.scrollTo(0, 0); };
   const done = Object.keys(LABS).filter((id) => progress(st, +id) >= 0.999).length;
   const part = Object.keys(LABS).reduce((s, id) => s + progress(st, +id), 0);
   useEffect(() => { document.body.dataset.view = view; }, [view]);
+  // Once the page scrolls, the navigation bar takes a slightly different tint so it stands apart from the content.
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 12);
+    on(); window.addEventListener('scroll', on, { passive: true });
+    return () => window.removeEventListener('scroll', on);
+  }, []);
 
   return (
     <div className="shell">
@@ -49,9 +55,6 @@ export default function App() {
         <div className="wordmark"><h1>Learn <em>Physics</em></h1><div className="tag">{u('tagline')}</div></div>
         <span className="sp" />
         {comm.online > 0 ? <div className="hereNow"><i /><span>{comm.online} {u('hereNow')}</span></div> : null}
-        {comm.uid
-          ? <button type="button" className="acct" aria-label={comm.me?.name || comm.me?.email} onClick={() => go('comm')}><span className="acct-i" aria-hidden="true">{(comm.me?.name || comm.me?.email || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</span><span className="acct-n">{comm.me?.name || comm.me?.email}</span>{comm.teacher ? <span className="tagT">{u('teacher')}</span> : null}</button>
-          : <div className="acct-btns"><button type="button" className="btn ghost sm" onClick={() => { comm.setAuthMode('in'); go('comm'); }}>{u('signInTab')}</button><button type="button" className="btn sm" onClick={() => { comm.setAuthMode('up'); go('comm'); }}>{u('signUpTab')}</button></div>}
       </header>
       <section className="status" aria-label={u('stLabel')}>
         <div className="st-l">
@@ -63,13 +66,14 @@ export default function App() {
         </div>
         <Clock />
       </section>
-      <nav className="nav" aria-label="Main">
+      <nav className={`nav${scrolled ? ' scrolled' : ''}`} aria-label="Main">
         {NAV.map(([k, t, ic]) => (
-          <button key={k} type="button" aria-current={view === k ? 'page' : undefined} onClick={() => (k === 'lang' ? setLangOpen(true) : go(k))}>
+          <button key={k} type="button" aria-current={view === k ? 'page' : undefined} onClick={() => go(k)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">{ic}</svg>
             <span>{u(t)}</span>
           </button>
         ))}
+        <UserMenu go={go} />
       </nav>
       <main>
         {view === 'home' && <Home go={go} />}
@@ -77,7 +81,7 @@ export default function App() {
         {view === 'lab' && <Lab />}
         {view === 'comm' && <Community go={go} />}
       </main>
-      {langOpen && <LangSheet onClose={() => setLangOpen(false)} />}
+      <GlobalLoader />
     </div>
   );
 }

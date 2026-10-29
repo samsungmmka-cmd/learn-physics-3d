@@ -98,3 +98,25 @@ Object.assign(UI, {
   showLabels: { si: 'කොටස්වල නම් පෙන්වන්න', en: 'Show part labels' },
   hideLabels: { si: 'කොටස්වල නම් සඟවන්න', en: 'Hide part labels' },
 });
+
+Object.assign(UI, {
+  resizePanel: { si: 'ත්‍රිමාණ පුවරුවේ පළල වෙනස් කරන්න (අදින්න)', en: 'Drag to resize the 3D panel' },
+});
+
+// Account menu, profile, loading
+Object.assign(UI, {
+  profile: { si: 'පැතිකඩ', en: 'Profile' },
+  account: { si: 'ගිණුම', en: 'Account' },
+  close: { si: 'වසන්න', en: 'Close' },
+  notSignedIn: { si: 'පුරනය වී නැත', en: 'Not signed in' },
+  profileSaved: { si: 'සුරකින ලදී.', en: 'Saved.' },
+  loading: { si: 'රැඳී සිටින්න…', en: 'Please wait…' },
+  stillWorking: { si: 'තවමත් ක්‍රියාත්මකයි. සම්බන්ධතාවය මන්දගාමී විය හැක.', en: 'Still working. The connection may be slow.' },
+});
+
+Object.assign(UI, {
+  searchPrac: { si: 'සොයන්න (English): උදා. vernier, 12', en: 'Search practicals, e.g. vernier, 12' },
+  noMatches: { si: 'ගැළපෙන දේ නැත', en: 'No matches' },
+});
+
+Object.assign(UI, { findPrac: { si: 'පරීක්ෂණයක් සොයන්න', en: 'Find a practical' } });

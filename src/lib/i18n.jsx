@@ -5,7 +5,7 @@ const LangCtx = createContext(null);
 const read = () => { try { return localStorage.getItem('quanta-lang'); } catch { return null; } };
 
 export function LangProvider({ children }) {
-  const [lang, setLangState] = useState(read() === 'en' ? 'en' : 'si');
+  const [lang, setLangState] = useState(read() === 'si' ? 'si' : 'en');
   useEffect(() => { document.documentElement.lang = lang; }, [lang]);
   const value = useMemo(() => {
     const L = (o) => (o == null ? '' : typeof o === 'string' ? o : o[lang] !== undefined ? o[lang] : o.en);

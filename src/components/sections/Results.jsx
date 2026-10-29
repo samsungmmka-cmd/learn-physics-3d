@@ -34,7 +34,7 @@ export default function Results() {
       <p style={{ fontSize: 11.5, color: 'var(--muted)' }}>{comm.uid ? u('synced') : u('saved')}</p>
       <div className="extra"><span className="lbl-s" style={{ color: 'var(--accent-2)' }}>{u('note')}</span>{L(lab.note)}</div>
       <div className="card"><h3>{u('classResults')}</h3>
-        <div className="row"><button type="button" className="btn" disabled={busy} onClick={share}>{u('shareRes')}</button><span className="muted">{shareMsg}</span></div>
+        <div className="row"><button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={share}>{u('shareRes')}</button><span className="muted">{shareMsg}</span></div>
       </div>
       <div className="row">
         <button type="button" className="btn ghost sm" onClick={() => { if (!armed) { setArmed(true); return; } update((n) => { n.labs[n.cur] = freshLab(n.cur); }); setArmed(false); }}>{armed ? u('confirm') : u('resetLab')}</button>
