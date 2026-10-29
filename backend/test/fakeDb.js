@@ -47,7 +47,22 @@ export function createFakeDb({ teacherCode = 'T-CODE' } = {}) {
     if (table === 'enrollments') return { status: 'enrolled', note: '', enrolled_at: new Date().toISOString(), completed_at: null };
     return {};
   }
+  const sent = []; // reset emails "sent"
+  let current = null; // user id for setSession/updateUser
   const authApi = {
+    async resetPasswordForEmail(email, opts) { sent.push({ email, redirectTo: opts?.redirectTo }); return { data: {}, error: null }; },
+    async setSession({ access_token, refresh_token }) {
+      const id = tokens.get(access_token);
+      if (!id || refresh_token !== `ref-${id}`) return { data: { session: null }, error: { message: 'Invalid' } };
+      current = id; const email = [...users.entries()].find(([, u]) => u.id === id)[0];
+      return { data: { session: { access_token, refresh_token, expires_at: 9999999999, user: { id, email } } }, error: null };
+    },
+    async updateUser({ password }) {
+      if (!current) return { data: {}, error: { message: 'Auth session missing!' } };
+      const entry = [...users.values()].find((u) => u.id === current);
+      if (entry.password === password) return { data: {}, error: { message: 'New password should be different from the old password.' } };
+      entry.password = password; return { data: { user: { id: current } }, error: null };
+    },
     async signUp({ email, password, options }) {
       if (users.has(email)) return { data: null, error: { status: 422, message: 'User already registered' } };
       const id = randomUUID(); users.set(email, { id, password });
@@ -78,5 +93,5 @@ export function createFakeDb({ teacherCode = 'T-CODE' } = {}) {
     auth: authApi,
     async rpc(fn, args) { if (fn === 'check_teacher_code') return { data: args.code === teacherCode, error: null }; return { data: null, error: { message: 'no fn' } }; },
   };
-  return { tables: t, anon: () => client, asUser: () => client };
+  return { tables: t, sent, anon: () => client, asUser: () => client };
 }

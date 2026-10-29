@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useT } from './lib/i18n.jsx';
 import { useLab } from './lib/labStore.jsx';
 import { useCommunity } from './lib/community.jsx';
+import { fmtDate } from './lib/dates.js';
 import { LABS } from './data/content.js';
 import { progress } from './lib/calc.js';
 import Home from './components/Home.jsx';
@@ -22,10 +23,9 @@ function Clock() {
   const { lang } = useT();
   const [now, setNow] = useState(new Date());
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
-  const mon = now.toLocaleString(lang === 'si' ? 'si-LK' : 'en-US', { month: 'short' });
   return (
     <div className="st-r">
-      <span>{lang === 'si' ? `${now.getFullYear()} ${mon} ${now.getDate()}` : `${mon} ${now.getDate()}, ${now.getFullYear()}`}</span>
+      <span className={lang === 'si' ? 'st-date si' : 'st-date'}>{fmtDate(now, lang)}</span>
       <span>{now.toLocaleTimeString('en-GB', { hour12: false })}</span>
     </div>
   );

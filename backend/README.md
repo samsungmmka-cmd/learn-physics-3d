@@ -23,7 +23,8 @@ The REST API for Learn Physics Lab. It handles student/teacher accounts, assignm
    on conflict (key) do update set value = excluded.value;
    ```
 3. In **Authentication → Sign In / Providers**, turn off **Confirm email** so users can sign in straight after signing up. If you keep it on, set the Site URL to the frontend's address.
-4. Copy `.env.example` to `.env` and fill in `SUPABASE_URL` and `SUPABASE_ANON_KEY` (from **Project Settings → API**).
+4. In **Authentication → URL Configuration**, set **Site URL** to the frontend's address (for example `https://learn-physics-3d.vercel.app`) and add it under **Redirect URLs**. Password-reset emails link back there.
+5. Copy `.env.example` to `.env` and fill in `SUPABASE_URL` and `SUPABASE_ANON_KEY` (from **Project Settings → API**).
 
 ```bash
 npm install
@@ -54,6 +55,8 @@ All paths start with `/api`. Paths marked 🔒 need `Authorization: Bearer <acce
 | POST | `/auth/signup` | anyone | `{ email, password, name, role: "student"\|"teacher", teacherCode? }` |
 | POST | `/auth/login` | anyone | `{ email, password }` → `{ session, user }` |
 | POST | `/auth/refresh` | anyone | `{ refresh_token }` → `{ session }` |
+| POST | `/auth/forgot` | anyone | `{ email }` → always `{ ok: true }`; Supabase emails a reset link back to `APP_URL` |
+| POST | `/auth/reset` | holder of a reset link | `{ access_token, refresh_token, password }` (tokens from the link) → `{ session, user }` |
 | GET / PATCH | `/auth/me` 🔒 | signed in | PATCH `{ name }` |
 | GET | `/assignments` 🔒 | signed in | students get `my_status`; teachers also get `enrolled_count` and `completed_count` |
 | POST | `/assignments` 🔒 | teacher | `{ title, description?, prac?, due? (YYYY-MM-DD) }` |

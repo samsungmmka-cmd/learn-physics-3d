@@ -75,3 +75,21 @@ Object.assign(UI, {
   colStatus: { si: 'තත්ත්වය', en: 'Status' },
   colNote: { si: 'සටහන', en: 'Note' },
 });
+
+// Forgotten password
+Object.assign(UI, {
+  forgotLink: { si: 'මුරපදය අමතකද?', en: 'Forgot password?' },
+  forgotTitle: { si: 'මුරපදය යළි සකසන්න', en: 'Reset your password' },
+  forgotHelp: { si: 'ඔබේ ගිණුමේ ඊමේල් ලිපිනය ඇතුළත් කරන්න. නව මුරපදයක් සැකසීමට සබැඳියක් එවනු ලැබේ.', en: 'Enter your account’s email. We’ll send you a link to set a new password.' },
+  sendReset: { si: 'සබැඳිය එවන්න', en: 'Send reset link' },
+  resetSent: { si: 'එම ඊමේල් සමඟ ගිණුමක් ඇත්නම්, සබැඳියක් එවා ඇත. ඔබේ ඊමේල් (සහ Spam ෆෝල්ඩරය) පරීක්ෂා කරන්න.', en: 'If an account exists for that email, a reset link is on its way. Check your inbox (and spam folder).' },
+  resetTitle: { si: 'නව මුරපදයක් සකසන්න', en: 'Set a new password' },
+  resetHelp: { si: 'ඔබේ ගිණුම සඳහා නව මුරපදයක් තෝරන්න.', en: 'Choose a new password for your account.' },
+  newPw: { si: 'නව මුරපදය', en: 'New password' },
+  newPw2: { si: 'නව මුරපදය නැවත', en: 'Repeat new password' },
+  savePw: { si: 'මුරපදය සුරකින්න', en: 'Save password' },
+  pwMismatch: { si: 'මුරපද දෙක නොගැළපේ.', en: 'The two passwords don’t match.' },
+  samePw: { si: 'පැරණි මුරපදයට වඩා වෙනස් මුරපදයක් තෝරන්න.', en: 'Choose a password different from your old one.' },
+  linkExpired: { si: 'මෙම සබැඳිය කල් ඉකුත් වී ඇත හෝ දැනටමත් භාවිතා කර ඇත. නව සබැඳියක් ඉල්ලන්න.', en: 'This link has expired or was already used. Request a new one.' },
+  backToSignIn: { si: 'පුරනය වීමට ආපසු', en: 'Back to sign in' },
+});

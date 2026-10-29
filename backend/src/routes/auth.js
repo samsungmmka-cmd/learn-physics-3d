@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
 import { requireUser } from '../middleware/auth.js';
-import { HttpError, must, unauthorized } from '../lib/errors.js';
+import { HttpError, badRequest, must, unauthorized } from '../lib/errors.js';
 import * as S from '../schemas.js';
 
 const sessionOut = (s) => ({ access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at });
 
-export default function authRoutes(db) {
+export default function authRoutes(db, { appUrl } = {}) {
   const r = Router();
 
   // Create an account. Teachers must give the school's teacher code; the database checks it again
@@ -47,6 +47,40 @@ export default function authRoutes(db) {
     res.json({
       session: sessionOut(data.session),
       user: { id: data.user.id, email: data.user.email, name: prof?.name || '', role: prof?.role || 'student' },
+    });
+  });
+
+  // Forgotten password: Supabase emails a one-time link that brings the user back to the app
+  // (APP_URL/#...type=recovery). Always answers the same way, so it can't be used to find out
+  // which emails have accounts.
+  r.post('/forgot', validate({ body: S.forgot }), async (req, res) => {
+    const { error } = await db.anon().auth.resetPasswordForEmail(req.valid.body.email, { redirectTo: appUrl ? `${appUrl}/` : undefined });
+    if (error) {
+      if (error.status === 429 || /rate limit/i.test(error.message)) throw new HttpError(429, 'rate_limited', 'Too many emails sent. Try again later.');
+      req.log?.warn({ err: error.message }, 'resetPasswordForEmail failed');
+    }
+    res.json({ ok: true });
+  });
+
+  // Set a new password using the recovery session from the emailed link.
+  r.post('/reset', validate({ body: S.resetPassword }), async (req, res) => {
+    const { access_token, refresh_token, password } = req.valid.body;
+    const sb = db.anon();
+    const { data: s, error: se } = await sb.auth.setSession({ access_token, refresh_token });
+    if (se || !s?.session) throw new HttpError(401, 'link_expired', 'This reset link has expired. Request a new one.');
+    const { error } = await sb.auth.updateUser({ password });
+    if (error) {
+      if (/different from the old|same/i.test(error.message)) throw new HttpError(400, 'same_password', 'Choose a password different from your old one');
+      if (/weak|short|characters/i.test(error.message)) throw badRequest(error.message);
+      throw new HttpError(401, 'link_expired', 'This reset link has expired. Request a new one.');
+    }
+    // Sign the user in with a fresh session.
+    const { data: fresh } = await sb.auth.refreshSession({ refresh_token: s.session.refresh_token });
+    const session = fresh?.session || s.session;
+    const prof = must(await db.asUser(session.access_token).from('profiles').select('name,role').eq('id', s.session.user.id).maybeSingle());
+    res.json({
+      session: sessionOut(session),
+      user: { id: s.session.user.id, email: s.session.user.email, name: prof?.name || '', role: prof?.role || 'student' },
     });
   });
 

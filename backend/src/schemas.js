@@ -19,6 +19,15 @@ export const signIn = z.object({
   password: z.string().min(1).max(72),
 });
 
+export const forgot = z.object({
+  email: z.email().max(200).transform((s) => s.toLowerCase()),
+});
+export const resetPassword = z.object({
+  access_token: z.string().min(20).max(4000),
+  refresh_token: z.string().min(5).max(2000),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(72),
+});
+
 export const refresh = z.object({ refresh_token: z.string().min(10).max(2000) });
 export const updateMe = z.object({ name: text(1, 60) });
 

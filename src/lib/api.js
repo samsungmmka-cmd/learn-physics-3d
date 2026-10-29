@@ -65,5 +65,11 @@ export async function signIn(email, password) {
   setSession({ ...d.session, user: d.user });
   return d;
 }
+export const forgotPassword = (email) => raw('POST', '/auth/forgot', { email });
+export async function resetPassword(recovery, password) {
+  const d = await raw('POST', '/auth/reset', { ...recovery, password });
+  setSession({ ...d.session, user: d.user });
+  return d;
+}
 export const signOut = () => setSession(null);
 export const saveUser = (user) => session && setSession({ ...session, user });

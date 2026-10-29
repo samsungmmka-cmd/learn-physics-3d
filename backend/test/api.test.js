@@ -113,6 +113,24 @@ describe('with a database', () => {
     const pr = await request(app).get('/api/progress').set(as(teacher)).expect(200);
     assert.equal(pr.body.scope, 'class');
   });
+  it('forgot password always answers ok and sends the app link', async () => {
+    const r = await request(app).post('/api/auth/forgot').send({ email: 'Kamal@school.lk' }).expect(200);
+    assert.deepEqual(r.body, { ok: true });
+    await request(app).post('/api/auth/forgot').send({ email: 'nobody@school.lk' }).expect(200);
+    assert.equal(db.sent[0].email, 'kamal@school.lk');
+    assert.equal(db.sent[0].redirectTo, 'https://learn-physics-3d.vercel.app/');
+    await request(app).post('/api/auth/forgot').send({ email: 'not-an-email' }).expect(400);
+  });
+  it('resets the password with the recovery tokens', async () => {
+    const { access_token, refresh_token } = student.session;
+    await request(app).post('/api/auth/reset').send({ access_token: 'x'.repeat(30), refresh_token, password: 'newpassword1' }).expect(401);
+    await request(app).post('/api/auth/reset').send({ access_token, refresh_token, password: 'short' }).expect(400);
+    await request(app).post('/api/auth/reset').send({ access_token, refresh_token, password: 'password123' }).expect(400);
+    const r = await request(app).post('/api/auth/reset').send({ access_token, refresh_token, password: 'newpassword1' }).expect(200);
+    assert.equal(r.body.user.name, 'Kamal');
+    await request(app).post('/api/auth/login').send({ email: 'kamal@school.lk', password: 'password123' }).expect(401);
+    await request(app).post('/api/auth/login').send({ email: 'kamal@school.lk', password: 'newpassword1' }).expect(200);
+  });
   it('teachers delete their assignment', async () => {
     await request(app).delete(`/api/assignments/${assignmentId}`).set(as(student)).expect(403);
     await request(app).delete(`/api/assignments/${assignmentId}`).set(as(teacher)).expect(204);

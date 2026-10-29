@@ -42,7 +42,7 @@ export function createApp(config, { db = config.dbConfigured ? createDb(config) 
   });
 
   if (db) {
-    api.use('/auth', authLimiter, authRoutes(db));
+    api.use('/auth', authLimiter, authRoutes(db, { appUrl: config.appUrl }));
     const signedIn = requireUser(db);
     api.use('/assignments', signedIn, assignmentRoutes());
     api.use(['/posts', '/results', '/progress', '/comments'], signedIn);

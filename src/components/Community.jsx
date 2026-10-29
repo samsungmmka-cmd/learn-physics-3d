@@ -4,6 +4,7 @@ import { useLab } from '../lib/labStore.jsx';
 import { useCommunity } from '../lib/community.jsx';
 import { LABS, PRAC } from '../data/content.js';
 import { avg, shareKeys } from '../lib/calc.js';
+import { fmtDate } from '../lib/dates.js';
 
 const pracTag = (p, u) => (p ? `P${String(p).padStart(2, '0')}` : u('general'));
 const pracTitle = (id, lang) => { const p = PRAC.find((x) => x[0] === String(id)); return p ? (lang === 'si' ? p[2] : p[3]) : ''; };
@@ -59,7 +60,7 @@ export function AssignmentRow({ a, onOpen }) {
   return (
     <div className="ai">
       <span className="badgeN">{a.prac ? String(a.prac).padStart(2, '0') : '—'}</span>
-      <div><b>{title}</b><small>{[a.teacher_name ? `${u('by')} ${a.teacher_name}` : '', a.due ? `${u('due')}: ${a.due}` : '', counts].filter(Boolean).join(' · ')}</small></div>
+      <div><b>{title}</b><small>{[a.teacher_name ? `${u('by')} ${a.teacher_name}` : '', a.due ? `${u('due')}: ${fmtDate(a.due, lang)}` : '', counts].filter(Boolean).join(' · ')}</small></div>
       <div className="row">
         {st ? <span className={`stTag${a.my_status === 'completed' ? ' done' : ''}`}>{st}</span> : null}
         <button type="button" className="btn sm ghost" onClick={open}>{u('details')}</button>
@@ -74,6 +75,8 @@ function errText(e, u) {
   if (e.code === 'invalid_login') return u('badLogin');
   if (e.status === 503) return u('serverSoon');
   if (e.code === 'email_taken') return u('emailTaken');
+  if (e.code === 'link_expired') return u('linkExpired');
+  if (e.code === 'same_password') return u('samePw');
   if (e.code === 'rate_limited') return u('tooMany');
   if (e.code === 'network' || e.code === 'not_api' || e.status === 404) return u('netErr');
   return e.message || u('postErr');
@@ -82,30 +85,53 @@ function errText(e, u) {
 function AuthCard() {
   const { u } = useT(); const comm = useCommunity();
   const mode = comm.authMode; const setMode = comm.setAuthMode;
-  const [f, setF] = useState({ name: '', email: '', password: '', role: 'student', teacherCode: '' });
+  const [f, setF] = useState({ name: '', email: '', password: '', password2: '', role: 'student', teacherCode: '' });
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const go = (m) => { setMode(m); setMsg(null); comm.setAuthNotice(null); };
+  const notice = comm.authNotice === 'linkExpired' ? ['bad', u('linkExpired')] : null;
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); setMsg(null);
     if (mode === 'in') { const err = await comm.signIn(f.email.trim(), f.password); if (err) setMsg(['bad', errText(err, u)]); }
-    else {
+    else if (mode === 'up') {
       const r = await comm.signUp({ name: f.name.trim(), email: f.email.trim(), password: f.password, role: f.role, teacherCode: f.role === 'teacher' ? f.teacherCode.trim() : undefined });
       if (r.error) setMsg(['bad', errText(r.error, u)]);
       else if (r.needsConfirmation) { setMsg(['good', u('checkEmail')]); setMode('in'); }
+    } else if (mode === 'forgot') {
+      const err = await comm.forgot(f.email.trim());
+      comm.setAuthNotice(null);
+      setMsg(err ? ['bad', errText(err, u)] : ['good', u('resetSent')]);
+    } else if (mode === 'reset') {
+      if (f.password !== f.password2) setMsg(['bad', u('pwMismatch')]);
+      else { const err = await comm.resetPassword(f.password); if (err) setMsg(['bad', errText(err, u)]); }
     }
     setBusy(false);
   };
+  const titles = { in: u('signInTitle'), up: u('signUpTitle'), forgot: u('forgotTitle'), reset: u('resetTitle') };
+  const helps = { in: u('authHelp'), up: u('authHelp'), forgot: u('forgotHelp'), reset: u('resetHelp') };
+  const buttons = { in: u('signInBtn'), up: u('createAcct'), forgot: u('sendReset'), reset: u('savePw') };
+  const newPw = mode === 'up' || mode === 'reset';
   return (
     <form className="card auth" onSubmit={submit}>
-      <div className="ctabs" role="tablist">
-        {[['in', u('signInTab')], ['up', u('signUpTab')]].map(([k, t]) => <button type="button" role="tab" key={k} className="chip" aria-selected={mode === k} aria-pressed={mode === k} onClick={() => { setMode(k); setMsg(null); }}>{t}</button>)}
-      </div>
-      <h3>{mode === 'in' ? u('signInTitle') : u('signUpTitle')}</h3>
-      <p className="muted">{u('authHelp')}</p>
+      {mode === 'in' || mode === 'up' ? (
+        <div className="ctabs" role="tablist">
+          {[['in', u('signInTab')], ['up', u('signUpTab')]].map(([k, t]) => <button type="button" role="tab" key={k} className="chip" aria-selected={mode === k} aria-pressed={mode === k} onClick={() => go(k)}>{t}</button>)}
+        </div>
+      ) : <button type="button" className="link" style={{ justifySelf: 'start' }} onClick={() => go('in')}>← {u('backToSignIn')}</button>}
+      <h3>{titles[mode]}</h3>
+      <p className="muted">{helps[mode]}</p>
       {comm.ready && !comm.enabled ? <p className="fb info">{u('serverSoon')}</p> : null}
+      {notice ? <p className={`fb ${notice[0]}`} role="status">{notice[1]}</p> : null}
       {mode === 'up' ? <label className="fld"><span>{u('yourName')}</span><input required value={f.name} onChange={set('name')} maxLength={60} autoComplete="name" /></label> : null}
-      <label className="fld"><span>{u('email')}</span><input type="email" required value={f.email} onChange={set('email')} autoComplete="email" /></label>
-      <label className="fld"><span>{u('password')}</span><input type="password" required minLength={mode === 'up' ? 8 : 1} maxLength={72} value={f.password} onChange={set('password')} autoComplete={mode === 'up' ? 'new-password' : 'current-password'} />{mode === 'up' ? <small className="muted">{u('pwHelp')}</small> : null}</label>
+      {mode !== 'reset' ? <label className="fld"><span>{u('email')}</span><input type="email" required value={f.email} onChange={set('email')} autoComplete="email" /></label> : null}
+      {mode !== 'forgot' ? (
+        <label className="fld"><span>{mode === 'reset' ? u('newPw') : u('password')}</span>
+          <input type="password" required minLength={newPw ? 8 : 1} maxLength={72} value={f.password} onChange={set('password')} autoComplete={newPw ? 'new-password' : 'current-password'} />
+          {newPw ? <small className="muted">{u('pwHelp')}</small> : null}
+        </label>
+      ) : null}
+      {mode === 'reset' ? <label className="fld"><span>{u('newPw2')}</span><input type="password" required minLength={8} maxLength={72} value={f.password2} onChange={set('password2')} autoComplete="new-password" /></label> : null}
+      {mode === 'in' ? <button type="button" className="link" style={{ justifySelf: 'start', fontSize: 13.5 }} onClick={() => go('forgot')}>{u('forgotLink')}</button> : null}
       {mode === 'up' ? (
         <fieldset className="fld roles"><legend>{u('iAm')}</legend>
           {[['student', u('roleStudent')], ['teacher', u('roleTeacher')]].map(([k, t]) => (
@@ -114,9 +140,9 @@ function AuthCard() {
         </fieldset>
       ) : null}
       {mode === 'up' && f.role === 'teacher' ? <label className="fld"><span>{u('teacherCode')}</span><input required value={f.teacherCode} onChange={set('teacherCode')} autoComplete="off" /><small className="muted">{u('teacherCodeHelp')}</small></label> : null}
-      <div className="row"><button className="btn" type="submit" disabled={busy}>{mode === 'in' ? u('signInBtn') : u('createAcct')}</button></div>
+      <div className="row"><button className="btn" type="submit" disabled={busy}>{buttons[mode]}</button></div>
       {msg ? <p className={`fb ${msg[0]}`} role="status">{msg[1]}</p> : null}
-      <p className="muted" style={{ fontSize: 13.5 }}>{mode === 'in' ? u('noAcct') : u('haveAcct')} <button type="button" className="link" onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setMsg(null); }}>{mode === 'in' ? u('signUpTab') : u('signInTab')}</button></p>
+      {mode === 'in' || mode === 'up' ? <p className="muted" style={{ fontSize: 13.5 }}>{mode === 'in' ? u('noAcct') : u('haveAcct')} <button type="button" className="link" onClick={() => go(mode === 'in' ? 'up' : 'in')}>{mode === 'in' ? u('signUpTab') : u('signInTab')}</button></p> : null}
     </form>
   );
 }
@@ -254,7 +280,7 @@ function AssignmentDetail({ id, onBack }) {
       <button type="button" className="link" style={{ justifySelf: 'start' }} onClick={onBack}>← {u('back')}</button>
       <div>
         <h3 style={{ fontSize: 22 }}>{a.title}</h3>
-        <p className="muted">{[a.teacher_name ? `${u('by')} ${a.teacher_name}` : '', a.due ? `${u('due')}: ${a.due}` : '', ago(a.created_at)].filter(Boolean).join(' · ')}</p>
+        <p className="muted">{[a.teacher_name ? `${u('by')} ${a.teacher_name}` : '', a.due ? `${u('due')}: ${fmtDate(a.due, lang)}` : '', ago(a.created_at)].filter(Boolean).join(' · ')}</p>
       </div>
       {a.prac ? <div className="row"><span className="badgeN">{String(a.prac).padStart(2, '0')}</span><b>{pracTitle(a.prac, lang)}</b>{LABS[a.prac] ? <button type="button" className="btn sm ghost" onClick={() => update((n) => { n.cur = a.prac; n.sec = 2; n.view = 'lab'; }, true)}>{u('open')}</button> : null}</div> : null}
       {a.description ? <p className="adesc">{a.description}</p> : null}

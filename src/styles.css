@@ -374,3 +374,7 @@ body[data-view="lab"] .status{display:none}
   .acct-n{display:none}
   .acct-i{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:15px}
 }
+/* Clock date: Sinhala month names use the body font, no wide letter-spacing, one line */
+.st-r span{white-space:nowrap}
+.st-date.si{font-family:var(--f-body);letter-spacing:.02em;font-weight:600}
+.st-r{gap:2px 12px}
