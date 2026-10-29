@@ -161,3 +161,10 @@ Object.assign(UI, {
 Object.assign(UI, { dueToday: { si: 'අද නියමිතයි', en: 'Due today' } });
 
 Object.assign(UI, { pfReply: { si: 'පිළිතුර', en: 'reply' } });
+
+Object.assign(UI, {
+  theme: { si: 'තේමාව', en: 'Theme', ta: 'தோற்றம்' },
+  themeLight: { si: 'ආලෝක', en: 'Light', ta: 'ஒளி' },
+  themeDark: { si: 'අඳුරු', en: 'Dark', ta: 'இருள்' },
+  themeAuto: { si: 'උපාංගය අනුව', en: 'Match device', ta: 'சாதனத்தைப் பின்பற்று' },
+});

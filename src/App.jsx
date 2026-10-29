@@ -26,7 +26,7 @@ function Clock() {
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
   return (
     <div className="st-r">
-      <span className={lang === 'si' ? 'st-date si' : 'st-date'}>{fmtDate(now, lang)}</span>
+      <span className={lang !== 'en' ? 'st-date si' : 'st-date'}>{fmtDate(now, lang)}</span>
       <span>{now.toLocaleTimeString('en-GB', { hour12: false })}</span>
     </div>
   );

@@ -1,5 +1,6 @@
 import { LABS, PRAC } from '../data/content.js';
 import { curMeas, measSize } from './calc.js';
+import { pTitle } from './ptitle.js';
 
 // Mirrors the handbook flow: which instrument, object and labels the 3D stage shows for the current step.
 export function sceneSpec(st, hero, theoryE, L, u, lang) {
@@ -7,7 +8,7 @@ export function sceneSpec(st, hero, theoryE, L, u, lang) {
   const p = PRAC.find((x) => x[0] === String(id));
   let type = lab.inst, place = { mode: 'show', surf: 'flat' }, hud = '', sub = '', zeroAt = false, hint = false;
   const setup = ls.lc && ls.zero;
-  if (hero) { hud = `${u('pracNo')} ${String(id).padStart(2, '0')}`; sub = lang === 'si' ? p[2] : p[3]; }
+  if (hero) { hud = `${u('pracNo')} ${String(id).padStart(2, '0')}`; sub = pTitle(p, lang); }
   else if (sec === 0) hud = u('parts');
   else if (sec === 1) { place = { mode: 'none', surf: 'flat' }; hud = `${u('lc')} · ${lab.inst === 'sphero' ? u('init') : u('zero')}`; if (theoryE !== null && lab.inst !== 'sphero') { zeroAt = true; hint = true; } }
   else if (!setup) { place = { mode: 'none', surf: 'flat' }; hud = !ls.lc ? u('lc') : lab.inst === 'sphero' ? u('init') : u('zero'); }

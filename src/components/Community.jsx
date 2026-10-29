@@ -6,13 +6,14 @@ import { LABS, PRAC } from '../data/content.js';
 import { avg, shareKeys } from '../lib/calc.js';
 import { fmtDate } from '../lib/dates.js';
 import Combobox from './Combobox.jsx';
+import { pTitle } from '../lib/ptitle.js';
 
 const pracTag = (p, u) => (p ? `P${String(p).padStart(2, '0')}` : u('general'));
-const pracTitle = (id, lang) => { const p = PRAC.find((x) => x[0] === String(id)); return p ? (lang === 'si' ? p[2] : p[3]) : ''; };
+const pracTitle = (id, lang) => { const p = PRAC.find((x) => x[0] === String(id)); return p ? pTitle(p, lang) : ''; };
 // Options for the practical pickers: label in the current language, searchable in English and by number.
 function pracOptions(ids, lang, u, first) {
   const out = first ? [first] : [];
-  ids.forEach((id) => { const p = PRAC.find((x) => x[0] === String(id)); if (!p) return; out.push({ value: String(id), tag: pracTag(id, u), label: lang === 'si' ? p[2] : p[3], sub: lang === 'si' ? p[3] : undefined, search: `${p[0]} p${String(p[0]).padStart(2, '0')} ${p[3]}` }); });
+  ids.forEach((id) => { const p = PRAC.find((x) => x[0] === String(id)); if (!p) return; out.push({ value: String(id), tag: pracTag(id, u), label: pTitle(p, lang), sub: lang !== 'en' ? p[3] : undefined, search: `${p[0]} p${String(p[0]).padStart(2, '0')} ${p[3]}` }); });
   return out;
 }
 const COLORS = ['#E3A91C', '#2E6CD6', '#8E45CB', '#F26B1D', '#2A9A5A', '#D0453A'];
@@ -23,7 +24,8 @@ function useAgo() {
   return (iso) => {
     const s = (Date.now() - new Date(iso).getTime()) / 1000; if (s < 60) return u('justNow');
     const m = s / 60, h = m / 60, d = h / 24;
-    const f = (n, a, b) => (lang === 'si' ? `${Math.floor(n)} ${a}කට පෙර` : `${Math.floor(n)}${b} ago`);
+    const TA = { d: 'நாள்', h: 'மணி', m: 'நிமிடம்' };
+    const f = (n, a, b) => (lang === 'si' ? `${Math.floor(n)} ${a}කට පෙර` : lang === 'ta' ? `${Math.floor(n)} ${TA[b]} முன்` : `${Math.floor(n)}${b} ago`);
     return d >= 1 ? f(d, 'දින', 'd') : h >= 1 ? f(h, 'පැය', 'h') : f(m, 'මිනිත්තු', 'm');
   };
 }

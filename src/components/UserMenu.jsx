@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useT } from '../lib/i18n.jsx';
 import { useCommunity } from '../lib/community.jsx';
 import { useNotifications } from '../lib/notifications.js';
+import { useTheme } from '../lib/theme.js';
 
 export const initials = (s) => (s || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
@@ -24,6 +25,25 @@ export function LangSwitch() {
       <div className="seg2">
         <button type="button" aria-pressed={lang === 'en'} onClick={() => setLang('en')} lang="en">EN</button>
         <button type="button" aria-pressed={lang === 'si'} onClick={() => setLang('si')} lang="si">සිං</button>
+        <button type="button" aria-pressed={lang === 'ta'} onClick={() => setLang('ta')} lang="ta">தமிழ்</button>
+      </div>
+    </div>
+  );
+}
+
+const SUN = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" /></svg>;
+const MOON = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" /></svg>;
+const AUTO = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor" stroke="none" /></svg>;
+
+export function ThemeSwitch() {
+  const { u } = useT(); const { theme, setTheme } = useTheme();
+  return (
+    <div className="um-lang um-theme" role="group" aria-label={u('theme')}>
+      <span className="um-k">{u('theme')}</span>
+      <div className="seg2 seg-ic">
+        {[['light', SUN, u('themeLight')], ['dark', MOON, u('themeDark')], ['system', AUTO, u('themeAuto')]].map(([k, ic, t]) => (
+          <button key={k} type="button" aria-pressed={theme === k} onClick={() => setTheme(k)} title={t} aria-label={t}>{ic}</button>
+        ))}
       </div>
     </div>
   );
@@ -72,6 +92,7 @@ export default function UserMenu({ go, current }) {
             </div>
           )}
           <LangSwitch />
+          <ThemeSwitch />
           {signedIn ? (
             <button type="button" role="menuitem" className="um-item danger" onClick={() => { setOpen(false); comm.signOut(); }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" /><path d="M10 8l-4 4 4 4M6 12h10" /></svg>{u('signOut')}

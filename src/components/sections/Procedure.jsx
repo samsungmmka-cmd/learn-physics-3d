@@ -34,6 +34,7 @@ function MiniTable({ m, lab, ls }) {
 }
 
 function PairNote({ pair, lang }) {
+  if (lang === 'ta') return <p className="fb info">கோளமானியின் மூன்று கால்களையும் தாளில் அழுத்தியதால் A, B, C அடையாளங்கள் உண்டாயின. நிலையான தாடையின் முனை <b>{pair[0]}</b> அடையாளத்தில் உள்ளது. வழுக்கும் தாடையின் முனை <b>{pair[1]}</b> அடையாளத்தில் அமரும் வரை அதை நகர்த்தவும். (செம்மஞ்சள் கோடு = அளக்கப்படும் தூரம் {pair})</p>;
   return lang === 'si'
     ? <p className="fb info">ගෝලමානයේ පාද තුන කඩදාසිය මත තද කළ විට A, B, C සලකුණු සෑදුණි. අචල හනුවේ තුඩ <b>{pair[0]}</b> සලකුණ මත තබා, සර්පණ හනුවේ තුඩ <b>{pair[1]}</b> සලකුණ මතට ගෙන එන්න. (තැඹිලි ඉර = මනින දුර {pair})</p>
     : <p className="fb info">The marks A, B and C were made by pressing the spherometer’s three legs onto the paper. The fixed jaw tip is on mark <b>{pair[0]}</b>. Slide the moving jaw until its tip sits on mark <b>{pair[1]}</b>. (Orange line = distance {pair} being measured.)</p>;

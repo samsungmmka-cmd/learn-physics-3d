@@ -31,7 +31,7 @@ export function LcCard() {
         <span className="unit">{lab.lcUnit}</span>
         {ls.lc ? null : <button type="button" className="btn" onClick={check}>{u('check')}</button>}
       </div>
-      {ls.lc ? <p className="fb good">{lab.lcWork}</p> : bad ? <p className="fb bad">{lang === 'si' ? 'නැවත උත්සාහ කරන්න. සූත්‍රය භාවිත කරන්න.' : 'Try again. Use the formula above.'}</p> : null}
+      {ls.lc ? <p className="fb good">{lab.lcWork}</p> : bad ? <p className="fb bad">{L({ si: 'නැවත උත්සාහ කරන්න. සූත්‍රය භාවිත කරන්න.', en: 'Try again. Use the formula above.', ta: 'மீண்டும் முயலவும். மேலுள்ள சூத்திரத்தைப் பயன்படுத்தவும்.' })}</p> : null}
     </div>
   );
 }
@@ -55,7 +55,7 @@ export function ZeroCard() {
     }
     const tol = lab.inst === 'micro' ? 0.0051 : 0.051;
     if (!(Math.abs(x - Math.abs(ls.e)) <= tol)) { setFb(['bad', u('wrongRead')]); return; }
-    if (!side || (side === 'sub') !== ls.e > 0) { setFb(['bad', lang === 'si' ? 'විශාලත්වය නිවැරදියි. ශුන්‍යය පිහිටා ඇත්තේ කුමන පැත්තේ දැයි නැවත සලකා බලන්න.' : 'The size is right. Look again at which side of the zero line the scale zero sits.']); return; }
+    if (!side || (side === 'sub') !== ls.e > 0) { setFb(['bad', L({ si: 'විශාලත්වය නිවැරදියි. ශුන්‍යය පිහිටා ඇත්තේ කුමන පැත්තේ දැයි නැවත සලකා බලන්න.', en: 'The size is right. Look again at which side of the zero line the scale zero sits.', ta: 'பருமன் சரி. அளவுகோலின் பூச்சியம் பூச்சியக் கோட்டின் எப்பக்கத்தில் உள்ளது என மீண்டும் பார்க்கவும்.' })]); return; }
     update((n) => { n.labs[n.cur].zero = true; });
   };
   if (sph) {

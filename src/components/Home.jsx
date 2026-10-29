@@ -8,7 +8,9 @@ import { sceneSpec } from '../lib/scene.js';
 import { getEngine } from '../engine/engine.js';
 import StageView from './StageView.jsx';
 import Ring from './Ring.jsx';
+import Tick from './Tick.jsx';
 import { PostItem, AssignmentRow } from './Community.jsx';
+import { pTitle } from '../lib/ptitle.js';
 
 let thumbCache = null;
 
@@ -38,12 +40,13 @@ export default function Home({ go }) {
         <div className="rowh"><h2 className="sec-h">{u('hPrac')}</h2><button type="button" className="link" onClick={() => go('list')}>{u('seeAll')}</button></div>
         <div className="carousel">
           {PRAC.slice(0, 8).map((p) => {
-            const id = p[0], open = !!LABS[id], title = lang === 'si' ? p[2] : p[3];
+            const id = p[0], open = !!LABS[id], title = pTitle(p, lang);
             return (
               <button type="button" key={id} className={`pcard${open ? '' : ' lock'}${String(st.cur) === id ? ' cur' : ''}`} tabIndex={open ? 0 : -1} onClick={() => open && pick(id)}>
                 <div className="th">
                   {open && thumbs[LABS[id].inst] ? <img alt="" src={thumbs[LABS[id].inst]} /> : <span className="glyph">{id.padStart(2, '0')}</span>}
                   {open ? <Ring p={progress(st, +id)} /> : null}
+                  {open && progress(st, +id) >= 0.999 ? <Tick label={u('stCompleted')} /> : null}
                 </div>
                 <div className="bd">
                   <span className="no">{u('pracNo').toUpperCase()} {id.padStart(2, '0')}</span>

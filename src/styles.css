@@ -6,9 +6,9 @@
   --good:#2A8C53; --good-soft:#DDF1E3; --bad:#C43A2E; --bad-soft:#F9E0DB; --info:#EFE6D8;
   --c1:#E3A91C; --c2:#2E6CD6; --c3:#8E45CB; --c4:#F26B1D; --c5:#2A9A5A; --c6:#D0453A;
   --shadow:0 1px 0 rgba(90,65,30,.05),0 10px 28px -16px rgba(90,65,30,.35);
-  --f-disp:"Barlow Condensed","Noto Sans Sinhala","Arial Narrow",sans-serif;
-  --f-body:"JetBrains Mono","Noto Sans Sinhala",ui-monospace,Menlo,monospace;
-  --f-mono:"JetBrains Mono","Noto Sans Sinhala",ui-monospace,Menlo,monospace;
+  --f-disp:"Barlow Condensed","Noto Sans Sinhala","Noto Sans Tamil","Arial Narrow",sans-serif;
+  --f-body:"JetBrains Mono","Noto Sans Sinhala","Noto Sans Tamil",ui-monospace,Menlo,monospace;
+  --f-mono:"JetBrains Mono","Noto Sans Sinhala","Noto Sans Tamil",ui-monospace,Menlo,monospace;
   --r:18px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -21,7 +21,7 @@
   --grid:rgba(240,215,180,.06); --accent:#FF7F3A; --accent-2:#FF9A5E; --accent-ink:#1A120B; --accent-soft:#3D2414;
   --good:#5CCB8C; --good-soft:#15301F; --bad:#FF8173; --bad-soft:#3D1B16; --info:#2B251E;
   --shadow:0 10px 28px -16px rgba(0,0,0,.7); color-scheme:dark}
-html[lang="si"] body{line-height:1.7}
+html:is([lang="si"],[lang="ta"]) body{line-height:1.7}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -36,7 +36,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .wordmark h1{font-size:40px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:.95}
 .wordmark h1 em{font-style:normal;color:var(--accent)}
 .tag{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.32em;color:var(--muted);text-transform:uppercase;margin-top:6px}
-html[lang="si"] .tag{letter-spacing:.08em}
+html:is([lang="si"],[lang="ta"]) .tag{letter-spacing:.08em}
 .hdr .sp{flex:1}
 .hereNow{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;color:var(--muted);border:1px solid var(--line);background:var(--card);padding:6px 10px;border-radius:99px}
 .hereNow i{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
@@ -73,7 +73,7 @@ html[lang="si"] .tag{letter-spacing:.08em}
 
 
 .co .pill{display:flex;align-items:center;gap:8px;background:#fff;color:#1E1912;font-family:var(--f-disp);font-weight:700;font-size:14.5px;letter-spacing:.04em;text-transform:uppercase;padding:5px 11px 5px 9px;border-radius:12px;box-shadow:0 2px 8px rgba(60,40,20,.18)}
-html[lang="si"] .co .pill{text-transform:none;letter-spacing:0;font-size:13.5px}
+html:is([lang="si"],[lang="ta"]) .co .pill{text-transform:none;letter-spacing:0;font-size:13.5px}
 
 
 .co.dim{opacity:.35}
@@ -82,7 +82,7 @@ html[lang="si"] .co .pill{text-transform:none;letter-spacing:0;font-size:13.5px}
 .hud{position:absolute;left:14px;top:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none;z-index:4}
 .chipT{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 12px;box-shadow:var(--shadow);max-width:62%}
 .chipT b{display:block;font-family:var(--f-disp);font-size:17px;text-transform:uppercase;letter-spacing:.03em}
-html[lang="si"] .chipT b{text-transform:none;font-size:15px}
+html:is([lang="si"],[lang="ta"]) .chipT b{text-transform:none;font-size:15px}
 .chipT span{font-size:12.5px;color:var(--muted)}
 .status3{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;border:1px solid var(--line);background:var(--card);display:flex;gap:7px;align-items:center}
 .status3 i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
@@ -101,7 +101,7 @@ html[lang="si"] .chipT b{text-transform:none;font-size:15px}
 .stage[data-mode="hero"] .bottom{display:none}
 .loupe{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;width:min(420px,100%);box-shadow:var(--shadow)}
 .loupe .lh{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-html[lang="si"] .loupe .lh{letter-spacing:0;text-transform:none;font-family:var(--f-body);font-weight:600}
+html:is([lang="si"],[lang="ta"]) .loupe .lh{letter-spacing:0;text-transform:none;font-family:var(--f-body);font-weight:600}
 .loupe .lh button{border:0;background:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:12px}
 .loupe canvas{display:block;width:100%;height:150px}
 .loupe.min canvas{display:none}
@@ -121,12 +121,12 @@ html[lang="si"] .loupe .lh{letter-spacing:0;text-transform:none;font-family:var(
 .btn.sm{padding:5px 10px;font-size:12.5px;border-radius:9px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .sec-h{font-size:28px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
-html[lang="si"] .sec-h{text-transform:none;font-size:24px}
+html:is([lang="si"],[lang="ta"]) .sec-h{text-transform:none;font-size:24px}
 .rowh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px}
 .link{border:0;background:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
 .card h3{font-size:20px;text-transform:uppercase;letter-spacing:.03em}
-html[lang="si"] .card h3{text-transform:none;font-size:17px}
+html:is([lang="si"],[lang="ta"]) .card h3{text-transform:none;font-size:17px}
 .muted{color:var(--muted)}
 .mono{font-family:var(--f-mono)}
 .empty{border:1.5px dashed var(--line);border-radius:14px;padding:16px;color:var(--muted);font-size:14px;text-align:center}
@@ -143,7 +143,7 @@ html[lang="si"] .card h3{text-transform:none;font-size:17px}
 .pcard .nm{overflow-wrap:anywhere}
 .pcard .no{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;color:var(--accent)}
 .pcard .nm{font-family:var(--f-disp);font-weight:700;font-size:18px;line-height:1.15;text-transform:uppercase}
-html[lang="si"] .pcard .nm{text-transform:none;font-size:15px;font-family:var(--f-body)}
+html:is([lang="si"],[lang="ta"]) .pcard .nm{text-transform:none;font-size:15px;font-family:var(--f-body)}
 .pcard.lock{cursor:default}.pcard.lock .th{opacity:.6}
 .pcard.lock .nm{color:var(--muted)}
 .pcard .th .glyph{font-family:var(--f-disp);font-size:52px;font-weight:800;color:var(--line)}
@@ -170,7 +170,7 @@ html[lang="si"] .pcard .nm{text-transform:none;font-size:15px;font-family:var(--
 .phead{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:grid;gap:2px}
 .phead .no{font-family:var(--f-mono);font-size:12px;letter-spacing:.2em;color:var(--accent)}
 .phead h1{font-size:26px;font-weight:800;text-transform:uppercase}
-html[lang="si"] .phead h1{text-transform:none;font-size:21px}
+html:is([lang="si"],[lang="ta"]) .phead h1{text-transform:none;font-size:21px}
 .tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px;border-bottom:1px solid var(--line)}
 .tab{border:0;background:none;border-radius:10px;padding:8px 3px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.25}
 .tab .k{display:block;font-family:var(--f-mono);font-weight:500;font-size:10.5px;margin-bottom:2px}
@@ -179,12 +179,12 @@ html[lang="si"] .phead h1{text-transform:none;font-size:21px}
 .body{padding:16px 18px 22px;display:flex;flex-direction:column;gap:14px}
 .body>*{flex-shrink:0}
 .body h2{font-size:21px;text-transform:uppercase}
-html[lang="si"] .body h2{text-transform:none;font-size:18px}
+html:is([lang="si"],[lang="ta"]) .body h2{text-transform:none;font-size:18px}
 .body h3{font-size:16px;font-family:var(--f-body);font-weight:700}
 .body p{margin:0;max-width:66ch}
 .body ol,.body ul{margin:0;padding-left:20px;display:grid;gap:5px}
 .eyebrow,.lbl-s{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-html[lang="si"] .lbl-s{letter-spacing:.02em}
+html:is([lang="si"],[lang="ta"]) .lbl-s{letter-spacing:.02em}
 .book{border-left:3px solid var(--accent);padding:2px 0 2px 12px;font-size:14px}
 .book small{display:block;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:2px}
 .theory{border:2px solid var(--accent);border-radius:14px;padding:12px 14px;display:grid;gap:8px;font-size:14px;background:var(--paper)}
@@ -383,7 +383,7 @@ body[data-view="lab"] .status{display:none}
    the date/clock style; large headings keep Barlow Condensed. Sinhala falls through to
    Noto Sans Sinhala. Monospace letters are wide, so running text is slightly smaller. */
 body{font-size:14px}
-html[lang="si"] body{font-size:15px}
+html:is([lang="si"],[lang="ta"]) body{font-size:15px}
 button,input,select,textarea,input::placeholder,textarea::placeholder{font-family:var(--f-body)}
 td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-variant-numeric:tabular-nums}
 
@@ -399,7 +399,7 @@ td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-var
 .co-arrows .hd{fill:currentColor;stroke:currentColor;stroke-width:1;stroke-linejoin:round}
 .co-arrows .tail{fill:currentColor;stroke:#fff;stroke-width:1.6}
 .co-arrows .arw.hl .ln{stroke-width:3.2}
-@media (max-width:560px){ .co .pill{font-size:12px;padding:3px 8px 3px 7px;border-left-width:3px;border-radius:8px} html[lang="si"] .co .pill{font-size:12px} }
+@media (max-width:560px){ .co .pill{font-size:12px;padding:3px 8px 3px 7px;border-left-width:3px;border-radius:8px} html:is([lang="si"],[lang="ta"]) .co .pill{font-size:12px} }
 
 /* Draggable tags: the tag itself takes pointer input (the 3D view keeps everything else). */
 .co{pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -493,7 +493,7 @@ td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-var
 .um-k{font-size:13px;font-weight:600;color:var(--ink2)}
 .seg2{display:inline-grid;grid-auto-flow:column;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
 .seg2 button{border:0;background:none;color:var(--ink2);font-weight:700;font-size:13px;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:var(--f-body);min-width:44px}
-.seg2 button[lang="si"]{font-family:"Noto Sans Sinhala",var(--f-body)}
+.seg2 button[lang="si"]{font-family:"Noto Sans Sinhala","Noto Sans Tamil",var(--f-body)}
 .seg2 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:0 2px 6px -3px rgba(0,0,0,.4)}
 
 .profile{background:var(--card);border:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));width:min(460px,100%);display:grid;gap:12px;box-shadow:var(--shadow)}
@@ -506,7 +506,7 @@ td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-var
 /* ---------- Assignment detail: section headings (students, comments) ---------- */
 .dsec{display:grid;gap:10px;padding-top:6px}
 .dsec-h{display:flex;align-items:center;gap:8px;line-height:1.25;margin:0}
-html[lang="si"] .dsec-h{line-height:1.5;padding-top:2px}
+html:is([lang="si"],[lang="ta"]) .dsec-h{line-height:1.5;padding-top:2px}
 .dsec-h .cnt{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:999px;background:var(--info);color:var(--ink2);font-family:var(--f-body);font-size:12px;font-weight:700;letter-spacing:0}
 .dsec>.post:first-of-type{border-top:0;padding-top:4px}
 
@@ -581,7 +581,7 @@ html[lang="si"] .dsec-h{line-height:1.5;padding-top:2px}
 .ptile.click{cursor:pointer;transition:transform .15s,border-color .15s}
 .ptile.click:hover{transform:translateY(-2px);border-color:var(--accent)}
 .pk{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-html[lang="si"] .pk{text-transform:none;letter-spacing:0}
+html:is([lang="si"],[lang="ta"]) .pk{text-transform:none;letter-spacing:0}
 .pv{font-family:var(--f-disp);font-size:38px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
 .ps{font-size:12.5px;color:var(--muted)}
 .pf-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
@@ -617,3 +617,33 @@ html[lang="si"] .pk{text-transform:none;letter-spacing:0}
 .pf-class span{font-size:12px;color:var(--muted)}
 /* post opened from the profile page */
 .post.focus{background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:12px;box-shadow:0 0 0 2px var(--accent);transition:background .4s}
+
+/* ---------- Tamil + theme switch + menu dividers ---------- */
+.seg2 button[lang="ta"]{font-family:"Noto Sans Tamil",var(--f-body);font-size:12.5px}
+.seg-ic button{display:grid;place-items:center;padding:5px 9px;min-width:36px}
+.seg-ic button svg{width:16px;height:16px}
+/* rows are separated by a line above each one, so nothing trails after the last row */
+.um-lang{border-bottom:0;margin:0}
+.um-item.danger{border-top:1px solid var(--line);border-radius:0 0 10px 10px;margin-top:2px}
+.pf-side{grid-auto-flow:row}
+@media (max-width:700px){ .pf-side{grid-auto-flow:row;justify-items:stretch} }
+
+/* ---------- Navigation: solid bar, pinned flush to the top (nothing shows through or above it) ---------- */
+.nav{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none}
+.nav.scrolled{background:color-mix(in srgb,var(--card) 88%,var(--accent) 12%)}
+@media (min-width:900px){
+  .nav{top:0}
+  .nav.scrolled{border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent}
+}
+
+/* ---------- Completed practical: green tick ---------- */
+.tick{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--good);color:#fff;flex:none;box-shadow:0 0 0 2px var(--card)}
+.tick svg{width:13px;height:13px}
+.pcard .th .tick{position:absolute;top:10px;left:10px;width:26px;height:26px;z-index:2}
+.pcard .th .tick svg{width:15px;height:15px}
+.gi{position:relative}
+.gi .tick{position:absolute;top:50%;right:12px;transform:translateY(-50%)}
+.gi.done{border-color:color-mix(in srgb,var(--good) 55%,var(--line))}
+.gi.done small{color:var(--good);font-weight:700}
+.pf-prac .tick{margin-left:-4px}
+.gi.done{padding-right:46px}

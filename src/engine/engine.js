@@ -293,6 +293,7 @@ export function createEngine() {
     R.loupe = (c, w, h, hint) => loupeCaliper(c, w, h, R, hint);
     R.hintText = (lang) => {
       const r = R.ideal(); const mm = Math.floor(r + 1e-9), k = Math.round((r - mm) * 10);
+      if (lang === 'ta') return `பிரதான அளவுகோல்: ${mm} mm · பொருந்தும் வேணியர் கோடு: ${k} → ${k} × 0.1 = ${fmt(k * 0.1, 1)} mm · வாசிப்பு = ${fmt(r, 1)} mm`;
       return lang === 'si'
         ? `ප්‍රධාන පරිමාණය: ${mm} mm · සම්පාත වන ව’නියර කොටස: ${k} → ${k} × 0.1 = ${fmt(k * 0.1, 1)} mm · පාඨාංකය = ${fmt(r, 1)} mm`
         : `Main scale: ${mm} mm · coinciding vernier line: ${k} → ${k} × 0.1 = ${fmt(k * 0.1, 1)} mm · reading = ${fmt(r, 1)} mm`;
@@ -378,6 +379,7 @@ export function createEngine() {
     R.loupe = (c, w, h, hint) => loupeMicro(c, w, h, R, hint);
     R.hintText = (lang) => {
       const r = R.ideal(); let sl = Math.floor(r / 0.5 + 1e-9) * 0.5; let cd = Math.round((r - sl) / 0.01); if (cd >= 50) { cd -= 50; sl += 0.5; }
+      if (lang === 'ta') return `பிரதான அளவுகோல்: ${fmt(sl, 1)} mm · கோட்டிலுள்ள வட்ட அளவுகோல் பிரிவு: ${cd} → ${cd} × 0.01 = ${fmt(cd * 0.01, 2)} mm · வாசிப்பு = ${fmt(r, 2)} mm`;
       return lang === 'si'
         ? `ප්‍රධාන පරිමාණය: ${fmt(sl, 1)} mm · ප්‍රධාන රේඛාව මත වෘත්ත පරිමාණ කොටස: ${cd} → ${cd} × 0.01 = ${fmt(cd * 0.01, 2)} mm · පාඨාංකය = ${fmt(r, 2)} mm`
         : `Main scale: ${fmt(sl, 1)} mm · circular-scale division on the line: ${cd} → ${cd} × 0.01 = ${fmt(cd * 0.01, 2)} mm · reading = ${fmt(r, 2)} mm`;
@@ -455,6 +457,7 @@ export function createEngine() {
     R.loupe = (c, w, h, hint) => loupeSphero(c, w, h, R, hint);
     R.hintText = (lang) => {
       const r = R.ideal(); const v = Math.floor(r + 1e-9), cd = Math.round((r - v) * 100);
+      if (lang === 'ta') return `நிலைக்குத்து அளவுகோல்: ${v} mm · வட்ட அளவுகோல்: ${cd} → ${cd} × 0.01 = ${fmt(cd * 0.01, 2)} mm · வாசிப்பு = ${fmt(r, 2)} mm`;
       return lang === 'si'
         ? `සිරස් පරිමාණය: ${v} mm · වෘත්තාකාර පරිමාණය: ${cd} → ${cd} × 0.01 = ${fmt(cd * 0.01, 2)} mm · පාඨාංකය = ${fmt(r, 2)} mm`
         : `Vertical scale: ${v} mm · circular scale: ${cd} → ${cd} × 0.01 = ${fmt(cd * 0.01, 2)} mm · reading = ${fmt(r, 2)} mm`;
@@ -480,7 +483,7 @@ export function createEngine() {
     const inv = camera.matrixWorldInverse; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const p = new THREE.Vector3();
     for (let i = 0; i < 8; i++) { p.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(inv); x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
     const a = thumbAspect || root.clientWidth / Math.max(1, root.clientHeight); const hero = E.mode === 'hero';
-    const padY = thumbAspect ? 0.82 : hero ? 0.58 : 0.62, padX = thumbAspect ? 0.88 : hero ? 0.74 : 0.86;
+    const padY = thumbAspect ? 0.82 : hero ? 0.7 : 0.62, padX = thumbAspect ? 0.88 : hero ? 0.86 : 0.86;
     return Math.min(((2 * VIEW.H * a) / (x1 - x0)) * padX, ((2 * VIEW.H) / (y1 - y0)) * padY);
   }
   function settle() {
@@ -493,7 +496,7 @@ export function createEngine() {
     VIEW.el = (rig.mode === 'free' ? 60 : 33) * DEG;
     const fb = new THREE.Box3(); rig.focusObjs().forEach((o) => fb.expandByObject(o)); const c = fb.getCenter(new THREE.Vector3());
     if (E.mode === 'lab') c.y -= (fb.max.y - fb.min.y) * 0.18;
-    const room = labels.length && lastSpec && lastSpec.room && !thumbAspect ? (root.clientWidth < 560 ? 0.8 : 0.74) : 1; // space around the instrument for part labels
+    const room = labels.length && lastSpec && lastSpec.room && !thumbAspect ? (E.mode === 'hero' ? (root.clientWidth < 560 ? 0.88 : 0.9) : (root.clientWidth < 560 ? 0.8 : 0.74)) : 1; // space around the instrument for part labels
     camHome = { target: c.clone(), zoom: fitZoom(fb, c, VIEW.az) * room, az: VIEW.az, fb: fb.clone(), room }; E.resetView();
   }
   // After the stage is resized (e.g. the user drags the panel divider): fit the instrument to the new

@@ -25,7 +25,7 @@ function CalcCard({ c, mm, ls, ready }) {
   const check = () => {
     const x = parseFloat(v); const ok = Math.abs(x - val) / val <= 0.015;
     update((n) => { n.labs[n.cur].calc[c.key] = { v: String(x), ok }; });
-    setMsg(['', ok ? u('correct') : lang === 'si' ? 'ගණනය නැවත පරීක්ෂා කරන්න.' : 'Check your working again.', ok]);
+    setMsg(['', ok ? u('correct') : L({ si: 'ගණනය නැවත පරීක්ෂා කරන්න.', en: 'Check your working again.', ta: 'உங்கள் கணிப்பை மீண்டும் சரிபார்க்கவும்.' }), ok]);
   };
   const work = () => {
     const parts = Object.entries(mm).filter(([k]) => LABS[ls._id].meas.find((x) => x.key === k && x.act === c.act)).map(([k, x]) => `${k} = ${fmt(x, 4)}`).join(', ');

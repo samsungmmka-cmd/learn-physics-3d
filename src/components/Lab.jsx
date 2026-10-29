@@ -10,6 +10,7 @@ import Theory from './sections/Theory.jsx';
 import Procedure from './sections/Procedure.jsx';
 import Readings from './sections/Readings.jsx';
 import Results from './sections/Results.jsx';
+import { pTitle } from '../lib/ptitle.js';
 
 const SECTIONS = [Apparatus, Theory, Procedure, Readings, Results];
 
@@ -60,7 +61,7 @@ export default function Lab() {
       <div className="labstage"><StageView mode="lab" spec={spec} hud={hud} sub={sub} /></div>
       <Splitter gridRef={gridRef} w={w} setW={setW} />
       <div className="panel">
-        <div className="phead"><span className="no">{u('pracNo').toUpperCase()} {String(st.cur).padStart(2, '0')}</span><h1>{lang === 'si' ? p[2] : p[3]}</h1></div>
+        <div className="phead"><span className="no">{u('pracNo').toUpperCase()} {String(st.cur).padStart(2, '0')}</span><h1>{pTitle(p, lang)}</h1></div>
         <div className="tabs" role="tablist">
           {L(UI.secs).map((t, i) => (
             <button key={i} type="button" className="tab" role="tab" aria-selected={i === st.sec} onClick={() => setSec(i)}><span className="k">0{i + 1}</span>{t}</button>

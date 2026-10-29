@@ -5,17 +5,20 @@ import { useCommunity } from '../lib/community.jsx';
 import { LABS, PRAC } from '../data/content.js';
 import { progress } from '../lib/calc.js';
 import { fmtDate } from '../lib/dates.js';
-import { Avatar, LangSwitch } from './UserMenu.jsx';
+import { Avatar, LangSwitch, ThemeSwitch } from './UserMenu.jsx';
 import { useNotifications } from '../lib/notifications.js';
+import Tick from './Tick.jsx';
+import { pTitle } from '../lib/ptitle.js';
 
-const pracName = (id, lang) => { const p = PRAC.find((x) => x[0] === String(id)); return p ? (lang === 'si' ? p[2] : p[3]) : ''; };
+const pracName = (id, lang) => { const p = PRAC.find((x) => x[0] === String(id)); return p ? pTitle(p, lang) : ''; };
 
 function useAgo() {
   const { lang, u } = useT();
   return (iso) => {
     const s = (Date.now() - new Date(iso).getTime()) / 1000; if (s < 60) return u('justNow');
     const m = s / 60, h = m / 60, d = h / 24;
-    const f = (n, a, b) => (lang === 'si' ? `${Math.floor(n)} ${a}කට පෙර` : `${Math.floor(n)}${b} ago`);
+    const TA = { d: 'நாள்', h: 'மணி', m: 'நிமிடம்' };
+    const f = (n, a, b) => (lang === 'si' ? `${Math.floor(n)} ${a}කට පෙර` : lang === 'ta' ? `${Math.floor(n)} ${TA[b]} முன்` : `${Math.floor(n)}${b} ago`);
     return d >= 1 ? f(d, 'දින', 'd') : h >= 1 ? f(h, 'පැය', 'h') : f(m, 'මිනිත්තු', 'm');
   };
 }
@@ -67,7 +70,7 @@ export default function Profile({ go }) {
   const dueIn = (due) => {
     const days = Math.ceil((new Date(`${due}T23:59:59`).getTime() - Date.now()) / 86400000);
     if (days <= 0) return u('dueToday');
-    return lang === 'si' ? `තව දින ${days}යි` : `Due in ${days} day${days === 1 ? '' : 's'}`;
+    return lang === 'si' ? `තව දින ${days}යි` : lang === 'ta' ? `இன்னும் ${days} நாள்` : `Due in ${days} day${days === 1 ? '' : 's'}`;
   };
   const nText = (n) => {
     if (n.kind === 'reply') return <><b>{n.who || u('someone')}</b> {u('nReplied')} <q>{n.about.slice(0, 60)}{n.about.length > 60 ? '…' : ''}</q></>;
@@ -117,6 +120,7 @@ export default function Profile({ go }) {
         </div>
         <div className="pf-side">
           <LangSwitch />
+          <ThemeSwitch />
           {signedIn ? <button type="button" className="btn ghost sm" onClick={() => { comm.signOut(); go('home'); }}>{u('signOut')}</button> : null}
         </div>
       </section>
@@ -147,7 +151,7 @@ export default function Profile({ go }) {
                 <button type="button" key={id} className="pf-prac" onClick={() => openLab(id)}>
                   <span className="badgeN">{String(id).padStart(2, '0')}</span>
                   <span className="pf-pn">{pracName(id, lang)}<span className="pf-bar"><i style={{ width: `${Math.max(2, p)}%` }} /></span></span>
-                  <b className="pf-pc">{p}%</b>
+                  {p >= 100 ? <Tick label={u('stCompleted')} /> : <b className="pf-pc">{p}%</b>}
                 </button>
               ); })}
             </div>
