@@ -21,6 +21,7 @@ export function createEngine() {
   let renderer, scene, camera, controls, base;
   const VIEW = { az: 45 * DEG, el: 33 * DEG, H: 9 };
   const labels = [];
+  const pins = new Map(); let zTop = 4; // tags the user dragged: stage fractions, kept until reset
 
   try {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -496,16 +497,41 @@ export function createEngine() {
   const SVGNS = 'http://www.w3.org/2000/svg';
   const arrowSvg = document.createElementNS(SVGNS, 'svg'); arrowSvg.setAttribute('class', 'co-arrows'); coLayer.appendChild(arrowSvg);
   let coIdx = 0;
+  // Tags the user has dragged keep their spot (as a fraction of the stage) until "reset view".
   function addLabel(text, target, key) {
     const n = (coIdx++ % 6) + 1;
     const el = document.createElement('div'); el.className = 'co'; el.style.setProperty('--cc', `var(--c${n})`);
-    el.innerHTML = '<span class="pill"><span></span></span>'; el.querySelector('.pill span').textContent = text;
+    el.innerHTML = '<span class="pill"><i class="grip" aria-hidden="true"></i><span></span></span>'; el.querySelector('.pill span:last-child').textContent = text;
+    el.title = text;
     coLayer.appendChild(el);
     const g = document.createElementNS(SVGNS, 'g'); g.setAttribute('class', 'arw'); g.style.setProperty('--cc', `var(--c${n})`);
-    g.innerHTML = '<path class="halo"/><path class="ln"/><path class="hd"/><circle class="tail" r="3.2"/>';
+    g.innerHTML = '<path class="halo"/><path class="halo-hd"/><path class="ln"/><path class="hd"/><circle class="tail" r="3.2"/>';
     arrowSvg.appendChild(g);
-    labels.push({ el, g, target, key });
+    const l = { el, g, target, key, pinKey: `${E.rig ? E.rig.type : ''}:${key}`, px: 0, py: 0 };
+    labels.push(l);
+    // Drag a tag to move it. Pointer events stop here, so dragging a tag never turns the 3D view.
+    let drag = null;
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button > 0) return; e.preventDefault(); e.stopPropagation();
+      try { el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      drag = { sx: e.clientX, sy: e.clientY, x: l.px, y: l.py, moved: false };
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (!drag) return; e.stopPropagation();
+      const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+      if (!drag.moved) { drag.moved = true; el.classList.add('drag'); g.classList.add('hl'); el.style.zIndex = ++zTop; }
+      const w = root.clientWidth || 1, h = root.clientHeight || 1;
+      pins.set(l.pinKey, { fx: (drag.x + dx) / w, fy: (drag.y + dy) / h });
+      lastTouch = performance.now();
+    });
+    const end = (e) => { if (!drag) return; e.stopPropagation(); if (drag.moved) { el.classList.remove('drag'); g.classList.remove('hl'); } drag = null; };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    el.addEventListener('pointerenter', () => g.classList.add('hl'));
+    el.addEventListener('pointerleave', () => { if (!drag) g.classList.remove('hl'); });
   }
+  E.resetLabels = () => pins.clear();
+  E.resetAll = () => { pins.clear(); E.resetView(); };
   function clearLabels() { labels.splice(0).forEach((l) => { l.el.remove(); l.g.remove(); }); coIdx = 0; }
   E.highlight = (key) => labels.forEach((l) => { const on = key != null && l.key === key; l.el.classList.toggle('hl', on); l.g.classList.toggle('hl', on); });
   const _v = new THREE.Vector3(); const _b = new THREE.Box3(); const _p = new THREE.Vector3();
@@ -552,12 +578,18 @@ export function createEngine() {
       else if (side === 'r') { x = box.x1 + GAP; y = ty - eh / 2; }
       else if (side === 't') { x = tx - ew / 2; y = box.y0 - GAP - eh; }
       else { x = tx - ew / 2; y = box.y1 + GAP; }
-      items.push({ l, tx, ty, ew, eh, side, x, y });
+      const pin = pins.get(l.pinKey);
+      items.push({ l, tx, ty, ew, eh, side, x, y, pinned: !!pin, px: pin ? pin.fx * w : 0, py: pin ? pin.fy * h : 0 });
     }
     // Lay the tags out side by side along each edge of the instrument, in the same order as the
     // parts they point to, so arrows never cross. Tags that don't fit move one row further out,
     // then to the opposite side.
     const placed = []; const G = 6;
+    for (const it of items) {
+      if (!it.pinned) continue;
+      it.px = Math.min(Math.max(PAD, it.px), w - PAD - it.ew); it.py = Math.min(Math.max(PAD, it.py), h - PAD - it.eh);
+      placed.push({ x0: it.px - 3, y0: it.py - 3, x1: it.px + it.ew + 3, y1: it.py + it.eh + 3 });
+    }
     const FLIP = { t: 'b', b: 't', l: 'r', r: 'l' };
     const blocked = (band, horiz) => [...obsCache, ...placed].filter((q) => (horiz ? q.y0 < band[1] && q.y1 > band[0] : q.x0 < band[1] && q.x1 > band[0]))
       .map((q) => (horiz ? [q.x0, q.x1] : [q.y0, q.y1])).sort((m, n) => m[0] - n[0]);
@@ -589,7 +621,7 @@ export function createEngine() {
       }
       return rest;
     }
-    const bySide = { t: [], b: [], l: [], r: [] }; items.forEach((it) => bySide[it.side].push(it));
+    const bySide = { t: [], b: [], l: [], r: [] }; items.forEach((it) => { if (!it.pinned) bySide[it.side].push(it); });
     const axisSort = (side) => (m, n) => (side === 't' || side === 'b' ? m.tx - n.tx : m.ty - n.ty);
     const left = [];
     for (const side of ['t', 'b', 'l', 'r']) {
@@ -616,23 +648,48 @@ export function createEngine() {
       const cx = it.px + it.ew / 2, cy = it.py + it.eh / 2, ddx = it.tx - cx, ddy = it.ty - cy;
       it.side = Math.abs(ddx) / it.ew > Math.abs(ddy) / it.eh ? (ddx > 0 ? 'l' : 'r') : (ddy > 0 ? 't' : 'b');
     }
+    const LANES = [0.5, 0.3, 0.7, 0.4, 0.6, 0.2, 0.8];
+    items.forEach((it, i) => { it.lane = LANES[i % LANES.length]; });
     for (const it of items) {
-      const best = { x: it.px, y: it.py };
-      it.l.el.style.transform = `translate(${Math.round(best.x)}px,${Math.round(best.y)}px)`;
-      // Arrow: from the tag's edge to the part, ending in an arrowhead at the part.
-      const sx = Math.min(Math.max(it.tx, best.x), best.x + it.ew), sy = Math.min(Math.max(it.ty, best.y), best.y + it.eh);
-      const ax = it.side === 'l' ? best.x + it.ew : it.side === 'r' ? best.x : sx;
-      const ay = it.side === 't' ? best.y + it.eh : it.side === 'b' ? best.y : sy;
-      const len = Math.hypot(it.tx - ax, it.ty - ay) || 1, ux = (it.tx - ax) / len, uy = (it.ty - ay) / len;
-      const ex = it.tx - ux * 2, ey = it.ty - uy * 2; // stop just short of the point so the tip sits on the part
-      const HL = 11, HW = 6.5; const bx = ex - ux * HL, by = ey - uy * HL;
-      const line = `M${ax.toFixed(1)},${ay.toFixed(1)} L${bx.toFixed(1)},${by.toFixed(1)}`;
-      const head = `M${ex.toFixed(1)},${ey.toFixed(1)} L${(bx - uy * HW).toFixed(1)},${(by + ux * HW).toFixed(1)} L${(bx + uy * HW).toFixed(1)},${(by - ux * HW).toFixed(1)} Z`;
-      const [halo, ln, hd, tail] = it.l.g.children;
-      halo.setAttribute('d', `${line} ${head}`); ln.setAttribute('d', line); hd.setAttribute('d', head);
-      tail.setAttribute('cx', ax.toFixed(1)); tail.setAttribute('cy', ay.toFixed(1));
-      it.l.g.style.display = len < 14 ? 'none' : '';
+      it.l.px = it.px; it.l.py = it.py;
+      it.l.el.style.transform = `translate(${Math.round(it.px)}px,${Math.round(it.py)}px)`;
+      drawArrow(it);
     }
+  }
+  // Arrow from a tag to its part: square steps with rounded corners, ending in an arrowhead on the part.
+  function routeArrow(it) {
+    const tx = it.tx, ty = it.ty, x0 = it.px, y0 = it.py, x1 = x0 + it.ew, y1 = y0 + it.eh, cx = x0 + it.ew / 2, cy = y0 + it.eh / 2;
+    const outX = tx < x0 - 14 || tx > x1 + 14, outY = ty < y0 - 14 || ty > y1 + 14;
+    if (outX && (Math.abs(tx - cx) / it.ew >= Math.abs(ty - cy) / it.eh || !outY)) {
+      const sx = tx < cx ? x0 : x1;
+      if (Math.abs(ty - cy) < 3) return [[sx, cy], [tx, ty]];
+      const mx = sx + (tx - sx) * it.lane; return [[sx, cy], [mx, cy], [mx, ty], [tx, ty]];
+    }
+    const sy = ty < cy ? y0 : y1, sx = Math.min(Math.max(tx, x0 + 12), x1 - 12);
+    if (Math.abs(tx - sx) < 3) return [[sx, sy], [tx, ty]];
+    const my = sy + (ty - sy) * it.lane; return [[sx, sy], [sx, my], [tx, my], [tx, ty]];
+  }
+  function roundedPath(pts, r) {
+    const f = (v) => v.toFixed(1); let d = `M${f(pts[0][0])},${f(pts[0][1])}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [qx, qy] = pts[i + 1];
+      const l1 = Math.hypot(bx - ax, by - ay) || 1, l2 = Math.hypot(qx - bx, qy - by) || 1, rr = Math.min(r, l1 / 2, l2 / 2);
+      d += ` L${f(bx - ((bx - ax) / l1) * rr)},${f(by - ((by - ay) / l1) * rr)} Q${f(bx)},${f(by)} ${f(bx + ((qx - bx) / l2) * rr)},${f(by + ((qy - by) / l2) * rr)}`;
+    }
+    const e = pts[pts.length - 1]; return `${d} L${f(e[0])},${f(e[1])}`;
+  }
+  function drawArrow(it) {
+    const pts = routeArrow(it), tx = it.tx, ty = it.ty, HL = 11, HW = 6.5;
+    const a = pts[pts.length - 2], len = Math.hypot(tx - a[0], ty - a[1]) || 1, ux = (tx - a[0]) / len, uy = (ty - a[1]) / len;
+    const body = pts.slice(0, -1).concat([[tx - ux * (HL + 2), ty - uy * (HL + 2)]]);
+    const d = roundedPath(body, 12);
+    const ex = tx - ux * 2, ey = ty - uy * 2, bx = ex - ux * HL, by = ey - uy * HL, f = (v) => v.toFixed(1);
+    const head = `M${f(ex)},${f(ey)} L${f(bx - uy * HW)},${f(by + ux * HW)} L${f(bx + uy * HW)},${f(by - ux * HW)} Z`;
+    const [halo, haloHd, ln, hd, tail] = it.l.g.children;
+    halo.setAttribute('d', d); ln.setAttribute('d', d); haloHd.setAttribute('d', head); hd.setAttribute('d', head);
+    tail.setAttribute('cx', f(pts[0][0])); tail.setAttribute('cy', f(pts[0][1]));
+    const total = Math.hypot(tx - pts[0][0], ty - pts[0][1]);
+    it.l.g.style.display = total < 16 ? 'none' : '';
   }
 
   /* ---------- public scene API ---------- */

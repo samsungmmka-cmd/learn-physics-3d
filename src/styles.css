@@ -393,9 +393,19 @@ td,.st-r,.st-bar b,input.num,.ctrl output,.mrow .c,.formula,.unit,.mono{font-var
 .co.hl .pill{background:var(--cc);color:#fff;border-left-color:#fff}
 .co-arrows{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:2;pointer-events:none}
 .co-arrows .arw{color:var(--cc)}
-.co-arrows .halo{fill:#fff;stroke:#fff;stroke-width:5;stroke-linejoin:round;stroke-linecap:round;opacity:.9}
-.co-arrows .ln{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.co-arrows .halo{fill:none;stroke:#fff;stroke-width:5.5;stroke-linejoin:round;stroke-linecap:round;opacity:.92}
+.co-arrows .halo-hd{fill:#fff;stroke:#fff;stroke-width:4;stroke-linejoin:round;opacity:.92}
+.co-arrows .ln{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .co-arrows .hd{fill:currentColor;stroke:currentColor;stroke-width:1;stroke-linejoin:round}
 .co-arrows .tail{fill:currentColor;stroke:#fff;stroke-width:1.6}
 .co-arrows .arw.hl .ln{stroke-width:3.2}
 @media (max-width:560px){ .co .pill{font-size:12px;padding:3px 8px 3px 7px;border-left-width:3px;border-radius:8px} html[lang="si"] .co .pill{font-size:12px} }
+
+/* Draggable tags: the tag itself takes pointer input (the 3D view keeps everything else). */
+.co{pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.co.drag{cursor:grabbing}
+.co.drag .pill{box-shadow:0 8px 22px rgba(0,0,0,.45)}
+.co .pill .grip{width:7px;height:13px;flex:none;opacity:.45;background:radial-gradient(circle,#1E1912 1.1px,transparent 1.3px) 0 0/3.5px 4.4px}
+.co:hover .pill{background:var(--cc);color:#fff;border-left-color:#fff}
+.co:hover .pill .grip,.co.hl .pill .grip{background-image:radial-gradient(circle,#fff 1.1px,transparent 1.3px);opacity:.8}
+@media (max-width:560px){ .co .pill{gap:5px} .co .pill .grip{height:11px} }

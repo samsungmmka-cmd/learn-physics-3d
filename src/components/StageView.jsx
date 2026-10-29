@@ -77,7 +77,7 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
         <button type="button" aria-label="Zoom out" onClick={() => eng.zoomBy(0.8)}>{Icon.out}</button>
         <button type="button" aria-label="Zoom in" onClick={() => eng.zoomBy(1.25)}>{Icon.in}</button>
         <span className="dv" />
-        <button type="button" aria-label={u('resetView')} onClick={() => eng.resetView()}>{Icon.home}</button>
+        <button type="button" aria-label={u('resetView')} onClick={() => eng.resetAll()}>{Icon.home}</button>
       </div>
       {mode === 'hero' && cta ? <div className="hero-cta">{cta}</div> : null}
       {mode === 'lab' ? (
