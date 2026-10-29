@@ -3,6 +3,7 @@ import { useT } from '../lib/i18n.jsx';
 import { useCommunity } from '../lib/community.jsx';
 import { useNotifications } from '../lib/notifications.js';
 import { useTheme } from '../lib/theme.js';
+import { useConfirm } from './Confirm.jsx';
 
 export const initials = (s) => (s || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
@@ -54,6 +55,7 @@ export default function UserMenu({ go, current }) {
   const { u } = useT(); const comm = useCommunity();
   const [open, setOpen] = useState(false);
   const notif = useNotifications();
+  const confirm = useConfirm();
   const wrap = useRef(null);
   useEffect(() => {
     if (!open) return undefined;
@@ -94,7 +96,7 @@ export default function UserMenu({ go, current }) {
           <LangSwitch />
           <ThemeSwitch />
           {signedIn ? (
-            <button type="button" role="menuitem" className="um-item danger" onClick={() => { setOpen(false); comm.signOut(); }}>
+            <button type="button" role="menuitem" className="um-item danger" onClick={async () => { setOpen(false); if (await confirm({ title: u('cfSignOutT'), message: u('cfSignOutM'), ok: u('signOut'), danger: true })) comm.signOut(); }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" /><path d="M10 8l-4 4 4 4M6 12h10" /></svg>{u('signOut')}
             </button>
           ) : null}

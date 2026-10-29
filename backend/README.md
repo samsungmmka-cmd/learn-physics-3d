@@ -14,9 +14,13 @@ The REST API for Learn Physics Lab. It handles student/teacher accounts, assignm
   - request bodies are capped at 32 KB;
   - logs are structured (pino), with the `Authorization` header redacted.
 
+## Classes
+
+A student chooses a teacher at sign-up or later on their profile (`profiles.teacher_id`; the database only accepts real teachers). A student with a teacher sees only that teacher's assignments, and class results show their classmates only. Teachers see only their own students in class progress and class results. A student with no teacher sees everything.
+
 ## Setup
 
-1. Create the tables. In your Supabase project, open **SQL Editor**, paste `supabase/migrations/0001_schema.sql` and run it.
+1. Create the tables. In your Supabase project, open **SQL Editor** and run `supabase/migrations/0001_schema.sql`, then `0002_teacher_link.sql`.
 2. Set your teacher code:
    ```sql
    insert into private.settings (key, value) values ('teacher_code', 'YOUR-CODE')
@@ -52,12 +56,13 @@ All paths start with `/api`. Paths marked 🔒 need `Authorization: Bearer <acce
 | Method | Path | Who | Body / query |
 |---|---|---|---|
 | GET | `/health` | anyone | |
-| POST | `/auth/signup` | anyone | `{ email, password, name, role: "student"\|"teacher", teacherCode? }` |
+| GET | `/auth/teachers` | anyone | registered teachers `{ teachers: [{ id, name }] }` (for the sign-up form) |
+| POST | `/auth/signup` | anyone | `{ email, password, name, role: "student"\|"teacher", teacherCode?, teacherId? }` |
 | POST | `/auth/login` | anyone | `{ email, password }` → `{ session, user }` |
 | POST | `/auth/refresh` | anyone | `{ refresh_token }` → `{ session }` |
 | POST | `/auth/forgot` | anyone | `{ email }` → always `{ ok: true }`; Supabase emails a reset link back to `APP_URL` |
 | POST | `/auth/reset` | holder of a reset link | `{ access_token, refresh_token, password }` (tokens from the link) → `{ session, user }` |
-| GET / PATCH | `/auth/me` 🔒 | signed in | PATCH `{ name }` |
+| GET / PATCH | `/auth/me` 🔒 | signed in | returns `teacher_id`, `teacher_name`; PATCH `{ name?, teacherId? }` (students change their teacher) |
 | GET | `/assignments` 🔒 | signed in | students get `my_status`; teachers also get `enrolled_count` and `completed_count` |
 | POST | `/assignments` 🔒 | teacher | `{ title, description?, prac?, due? (YYYY-MM-DD) }` |
 | GET | `/assignments/:id` 🔒 | signed in | includes comments; teachers also get the enrollment list |

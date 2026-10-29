@@ -4,13 +4,14 @@ import { useLab } from '../../lib/labStore.jsx';
 import { useCommunity } from '../../lib/community.jsx';
 import { DISC, LABS, RESULT_TXT } from '../../data/content.js';
 import { fmt, freshLab, measMeans, myShare } from '../../lib/calc.js';
+import { useConfirm } from '../Confirm.jsx';
 
 export default function Results() {
   const { L, u } = useT();
   const { st, update } = useLab();
   const comm = useCommunity();
+  const confirm = useConfirm();
   const id = st.cur, lab = LABS[id], ls = st.labs[id], mm = measMeans(ls, id);
-  const [armed, setArmed] = useState(false);
   const [shareMsg, setShareMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const rows = [];
@@ -20,6 +21,7 @@ export default function Results() {
     if (!comm.enabled) { setShareMsg(u('offline')); return; }
     if (!comm.uid) { setShareMsg(u('signInToJoin')); return; }
     const vals = myShare(st, id); if (!Object.keys(vals).length) { setShareMsg(u('noShare')); return; }
+    if (!(await confirm({ title: u('cfShareT'), message: u('cfShareM'), ok: u('shareRes') }))) return;
     setBusy(true); const err = await comm.shareResult(id, vals); setBusy(false);
     setShareMsg(err ? u('postErr') : u('shared'));
   };
@@ -37,7 +39,7 @@ export default function Results() {
         <div className="row"><button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={share}>{u('shareRes')}</button><span className="muted">{shareMsg}</span></div>
       </div>
       <div className="row">
-        <button type="button" className="btn ghost sm" onClick={() => { if (!armed) { setArmed(true); return; } update((n) => { n.labs[n.cur] = freshLab(n.cur); }); setArmed(false); }}>{armed ? u('confirm') : u('resetLab')}</button>
+        <button type="button" className="btn ghost sm" onClick={async () => { if (await confirm({ title: u('cfResetT'), message: u('cfResetM'), ok: u('resetLab'), danger: true })) update((n) => { n.labs[n.cur] = freshLab(n.cur); }); }}>{u('resetLab')}</button>
       </div>
     </>
   );

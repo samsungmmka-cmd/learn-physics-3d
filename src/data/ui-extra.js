@@ -168,3 +168,52 @@ Object.assign(UI, {
   themeDark: { si: 'අඳුරු', en: 'Dark', ta: 'இருள்' },
   themeAuto: { si: 'උපාංගය අනුව', en: 'Match device', ta: 'சாதனத்தைப் பின்பற்று' },
 });
+
+// Teacher link
+Object.assign(UI, {
+  myTeacher: { si: 'මගේ ගුරුවරයා', en: 'My teacher', ta: 'என் ஆசிரியர்' },
+  myTeacherHelp: { si: 'ඔබේ පන්තියේ පැවරුම් පෙන්වනු ලබන්නේ මෙම ගුරුවරයාගෙනි. පසුව පැතිකඩෙන් වෙනස් කළ හැක.', en: 'You’ll see this teacher’s assignments. You can change it later in your profile.', ta: 'இந்த ஆசிரியரின் ஒப்படைகள் உங்களுக்குக் காட்டப்படும். பின்னர் சுயவிவரத்தில் மாற்றலாம்.' },
+  chooseLater: { si: 'පසුව තෝරන්න', en: 'Choose later', ta: 'பின்னர் தெரிவு செய்' },
+  searchTeacher: { si: 'ගුරුවරයා සොයන්න', en: 'Search teachers', ta: 'ஆசிரியரைத் தேடு' },
+  noTeachers: { si: 'තවම ලියාපදිංචි ගුරුවරුන් නැත', en: 'No teachers registered yet', ta: 'இன்னும் பதிவுசெய்த ஆசிரியர்கள் இல்லை' },
+  noTeacherSet: { si: 'තවම ගුරුවරයෙක් තෝරා නැත. සියලු පැවරුම් පෙන්වයි.', en: 'No teacher chosen yet. You see all assignments.', ta: 'இன்னும் ஆசிரியர் தெரிவு செய்யப்படவில்லை. எல்லா ஒப்படைகளும் காட்டப்படுகின்றன.' },
+  changeTeacher: { si: 'ගුරුවරයා වෙනස් කරන්න', en: 'Change teacher', ta: 'ஆசிரியரை மாற்று' },
+  teacherSaved: { si: 'ගුරුවරයා යාවත්කාලීන කළා.', en: 'Teacher updated.', ta: 'ஆசிரியர் புதுப்பிக்கப்பட்டார்.' },
+  myStudents: { si: 'මගේ සිසුන්', en: 'My students', ta: 'என் மாணவர்கள்' },
+});
+
+// Confirmations + pagination
+Object.assign(UI, {
+  confirmOk: { si: 'තහවුරු කරන්න', en: 'Confirm', ta: 'உறுதிப்படுத்து' },
+  pages: { si: 'පිටු', en: 'Pages', ta: 'பக்கங்கள்' },
+  prevPage: { si: 'පෙර පිටුව', en: 'Previous page', ta: 'முந்தைய பக்கம்' },
+  nextPage: { si: 'ඊළඟ පිටුව', en: 'Next page', ta: 'அடுத்த பக்கம்' },
+  cfPostT: { si: 'මෙය පළ කරන්නද?', en: 'Post this to the class?', ta: 'இதை வகுப்பில் பதிவிடவா?' },
+  cfPostM: { si: 'ඔබේ පන්තියේ සියලු දෙනාට මෙය පෙනේ.', en: 'Everyone in the community will see it.', ta: 'சமூகத்திலுள்ள அனைவரும் இதைப் பார்ப்பார்கள்.' },
+  cfReplyT: { si: 'පිළිතුර යවන්නද?', en: 'Send this reply?', ta: 'இப்பதிலை அனுப்பவா?' },
+  cfCommentT: { si: 'අදහස යවන්නද?', en: 'Send this comment?', ta: 'இக்கருத்தை அனுப்பவா?' },
+  cfDelPostT: { si: 'මෙම පළ කිරීම මකන්නද?', en: 'Delete this post?', ta: 'இப்பதிவை நீக்கவா?' },
+  cfDelCommentT: { si: 'මෙම අදහස මකන්නද?', en: 'Delete this comment?', ta: 'இக்கருத்தை நீக்கவா?' },
+  cfDelM: { si: 'මෙය ආපසු ගත නොහැක.', en: 'This can’t be undone.', ta: 'இதை மீளப் பெற முடியாது.' },
+  cfDelAsgT: { si: 'මෙම පැවරුම මකන්නද?', en: 'Delete this assignment?', ta: 'இவ்வொப்படையை நீக்கவா?' },
+  cfDelAsgM: { si: 'සිසුන්ගේ ලියාපදිංචි වීම් සහ අදහස් ද මැකේ. මෙය ආපසු ගත නොහැක.', en: 'Students’ enrolments and comments will be deleted too. This can’t be undone.', ta: 'மாணவர்களின் பதிவுகளும் கருத்துகளும் நீக்கப்படும். இதை மீளப் பெற முடியாது.' },
+  cfPublishT: { si: 'මෙම පැවරුම පළ කරන්නද?', en: 'Publish this assignment?', ta: 'இவ்வொப்படையை வெளியிடவா?' },
+  cfPublishM: { si: 'ඔබේ සිසුන්ට එය වහාම පෙනේ.', en: 'Your students will see it straight away.', ta: 'உங்கள் மாணவர்கள் உடனே இதைப் பார்ப்பார்கள்.' },
+  cfEnrollT: { si: 'මෙම පැවරුමට ලියාපදිංචි වන්නද?', en: 'Enroll in this assignment?', ta: 'இவ்வொப்படையில் பதிவு செய்யவா?' },
+  cfLeaveT: { si: 'මෙම පැවරුමෙන් ඉවත් වන්නද?', en: 'Leave this assignment?', ta: 'இவ்வொப்படையிலிருந்து விலகவா?' },
+  cfLeaveM: { si: 'ඔබේ සටහන මැකේ.', en: 'Your note will be removed.', ta: 'உங்கள் குறிப்பு நீக்கப்படும்.' },
+  cfDoneT: { si: 'සම්පූර්ණ ලෙස සලකුණු කරන්නද?', en: 'Mark this assignment complete?', ta: 'இவ்வொப்படையை முடிந்ததாகக் குறிக்கவா?' },
+  cfDoneM: { si: 'ඔබේ ගුරුවරයාට මෙය සහ ඔබේ සටහන පෙනේ.', en: 'Your teacher will see this and your note.', ta: 'உங்கள் ஆசிரியர் இதையும் உங்கள் குறிப்பையும் பார்ப்பார்.' },
+  cfReopenT: { si: 'නැවත විවෘත කරන්නද?', en: 'Reopen this assignment?', ta: 'இவ்வொப்படையை மீண்டும் திறக்கவா?' },
+  cfShareT: { si: 'ඔබේ ප්‍රතිඵල පන්තිය සමඟ බෙදාගන්නද?', en: 'Share your results with the class?', ta: 'உங்கள் பெறுபேறுகளை வகுப்புடன் பகிரவா?' },
+  cfShareM: { si: 'ඔබේ අගයන් පන්ති ප්‍රස්ථාරයේ පෙන්වයි.', en: 'Your values will appear on the class chart.', ta: 'உங்கள் பெறுமானங்கள் வகுப்பு வரைபில் தோன்றும்.' },
+  cfSignOutT: { si: 'ඉවත් වන්නද?', en: 'Sign out?', ta: 'வெளியேறவா?' },
+  cfSignOutM: { si: 'ඔබේ පරීක්ෂණ ප්‍රගතිය මෙම උපාංගයේ පවතී.', en: 'Your practical progress stays on this device.', ta: 'உங்கள் செய்முறை முன்னேற்றம் இச்சாதனத்தில் இருக்கும்.' },
+  cfNameT: { si: 'නම වෙනස් කරන්නද?', en: 'Change your name?', ta: 'பெயரை மாற்றவா?' },
+  cfTeacherT: { si: 'ගුරුවරයා වෙනස් කරන්නද?', en: 'Change your teacher?', ta: 'ஆசிரியரை மாற்றவா?' },
+  cfTeacherM: { si: 'ඔබට පෙනෙන පැවරුම් සහ පන්ති ප්‍රතිඵල මෙම ගුරුවරයාගේ පන්තියට වෙනස් වේ.', en: 'Your assignments and class results will switch to this teacher’s class.', ta: 'உங்கள் ஒப்படைகளும் வகுப்புப் பெறுபேறுகளும் இந்த ஆசிரியரின் வகுப்புக்கு மாறும்.' },
+  cfReadT: { si: 'සියල්ල කියවූ ලෙස සලකුණු කරන්නද?', en: 'Mark all notifications as read?', ta: 'எல்லா அறிவிப்புகளையும் படித்ததாகக் குறிக்கவா?' },
+  cfResetT: { si: 'මෙම පරීක්ෂණය නැවත අරඹන්නද?', en: 'Restart this practical?', ta: 'இச்செய்முறையை மீண்டும் தொடங்கவா?' },
+  cfResetM: { si: 'මෙම පරීක්ෂණයේ සියලු පාඨාංක සහ ගණනය කිරීම් මැකේ.', en: 'All readings and calculations for this practical will be cleared.', ta: 'இச்செய்முறையின் எல்லா வாசிப்புகளும் கணிப்புகளும் அழிக்கப்படும்.' },
+  cfRecordT: { si: 'මෙම පාඨාංකය සටහන් කරන්නද?', en: 'Record this reading?', ta: 'இவ்வாசிப்பைப் பதியவா?' },
+});

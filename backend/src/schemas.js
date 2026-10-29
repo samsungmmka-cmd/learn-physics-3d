@@ -12,6 +12,7 @@ export const signUp = z.object({
   name: text(1, 60),
   role: z.enum(['student', 'teacher']).default('student'),
   teacherCode: z.string().trim().max(100).optional(),
+  teacherId: z.uuid().nullable().optional(),
 }).refine((b) => b.role !== 'teacher' || !!b.teacherCode, { message: 'Teacher code is required', path: ['teacherCode'] });
 
 export const signIn = z.object({
@@ -29,7 +30,8 @@ export const resetPassword = z.object({
 });
 
 export const refresh = z.object({ refresh_token: z.string().min(10).max(2000) });
-export const updateMe = z.object({ name: text(1, 60) });
+export const updateMe = z.object({ name: text(1, 60).optional(), teacherId: z.uuid().nullable().optional() })
+  .refine((b) => b.name !== undefined || b.teacherId !== undefined, { message: 'Nothing to update' });
 
 export const createAssignment = z.object({
   title: text(1, 120),

@@ -6,6 +6,8 @@ import { LABS, PRAC } from '../data/content.js';
 import { avg, shareKeys } from '../lib/calc.js';
 import { fmtDate } from '../lib/dates.js';
 import Combobox from './Combobox.jsx';
+import { useConfirm } from './Confirm.jsx';
+import { usePaged } from './Pager.jsx';
 import { pTitle } from '../lib/ptitle.js';
 
 const pracTag = (p, u) => (p ? `P${String(p).padStart(2, '0')}` : u('general'));
@@ -39,7 +41,7 @@ function useName() {
 }
 
 export function PostItem({ p, compact, onReply, children }) {
-  const { u } = useT(); const comm = useCommunity(); const ago = useAgo(); const nameOf = useName();
+  const { u } = useT(); const comm = useCommunity(); const confirm = useConfirm(); const ago = useAgo(); const nameOf = useName();
   const prof = comm.profiles[p.author];
   const text = compact && p.body.length > 160 ? `${p.body.slice(0, 160)}…` : p.body;
   return (
@@ -51,7 +53,7 @@ export function PostItem({ p, compact, onReply, children }) {
         {!compact ? (
           <div className="acts">
             {!p.parent && onReply ? <button type="button" onClick={onReply}>{u('reply')}</button> : null}
-            {p.author === comm.uid || comm.teacher ? <button type="button" onClick={() => comm.delPost(p.id)}>{u('del')}</button> : null}
+            {p.author === comm.uid || comm.teacher ? <button type="button" onClick={async () => { if (await confirm({ title: u('cfDelPostT'), message: u('cfDelM'), quote: p.body.slice(0, 140), ok: u('del'), danger: true })) comm.delPost(p.id); }}>{u('del')}</button> : null}
           </div>
         ) : null}
         {children}
@@ -91,10 +93,20 @@ function errText(e, u) {
   return e.message || u('postErr');
 }
 
+// Searchable list of registered teachers (with "Choose later").
+export function TeacherPicker({ id, teachers, value, onChange }) {
+  const { u } = useT();
+  if (teachers === null) return <div className="empty loading"><span className="spin" aria-hidden="true" />{u('loading')}</div>;
+  const options = [{ value: '', label: u('chooseLater'), search: 'none later skip' }, ...teachers.map((t) => ({ value: t.id, label: t.name, search: t.name }))];
+  return <Combobox id={id} label={u('myTeacher')} placeholder={teachers.length ? u('searchTeacher') : u('noTeachers')} value={value || ''} onChange={onChange} options={options} />;
+}
+
 function AuthCard() {
   const { u } = useT(); const comm = useCommunity();
   const mode = comm.authMode; const setMode = comm.setAuthMode;
-  const [f, setF] = useState({ name: '', email: '', password: '', password2: '', role: 'student', teacherCode: '' });
+  const [f, setF] = useState({ name: '', email: '', password: '', password2: '', role: 'student', teacherCode: '', teacherId: '' });
+  const [teachers, setTeachers] = useState(null);
+  useEffect(() => { if (mode === 'up' && teachers === null) comm.listTeachers().then(setTeachers); }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const go = (m) => { setMode(m); setMsg(null); comm.setAuthNotice(null); };
@@ -103,7 +115,7 @@ function AuthCard() {
     e.preventDefault(); setBusy(true); setMsg(null);
     if (mode === 'in') { const err = await comm.signIn(f.email.trim(), f.password); if (err) setMsg(['bad', errText(err, u)]); }
     else if (mode === 'up') {
-      const r = await comm.signUp({ name: f.name.trim(), email: f.email.trim(), password: f.password, role: f.role, teacherCode: f.role === 'teacher' ? f.teacherCode.trim() : undefined });
+      const r = await comm.signUp({ name: f.name.trim(), email: f.email.trim(), password: f.password, role: f.role, teacherCode: f.role === 'teacher' ? f.teacherCode.trim() : undefined, teacherId: f.role === 'student' && f.teacherId ? f.teacherId : undefined });
       if (r.error) setMsg(['bad', errText(r.error, u)]);
       else if (r.needsConfirmation) { setMsg(['good', u('checkEmail')]); setMode('in'); }
     } else if (mode === 'forgot') {
@@ -148,6 +160,12 @@ function AuthCard() {
           ))}
         </fieldset>
       ) : null}
+      {mode === 'up' && f.role === 'student' ? (
+        <div className="fld"><label htmlFor="suTeacher">{u('myTeacher')}</label>
+          <TeacherPicker id="suTeacher" teachers={teachers} value={f.teacherId} onChange={(v) => setF({ ...f, teacherId: v })} />
+          <small className="muted">{u('myTeacherHelp')}</small>
+        </div>
+      ) : null}
       {mode === 'up' && f.role === 'teacher' ? <label className="fld"><span>{u('teacherCode')}</span><input required value={f.teacherCode} onChange={set('teacherCode')} autoComplete="off" /><small className="muted">{u('teacherCodeHelp')}</small></label> : null}
       <div className="row"><button className="btn" type="submit" disabled={busy} aria-busy={busy}>{buttons[mode]}</button></div>
       {msg ? <p className={`fb ${msg[0]}`} role="status">{msg[1]}</p> : null}
@@ -184,8 +202,10 @@ function Discussion() {
   const [filter, setFilter] = useState('all'); const [text, setText] = useState(''); const [prac, setPrac] = useState('0');
   const [replyTo, setReplyTo] = useState(null); const [reply, setReply] = useState(''); const [err, setErr] = useState('');
   const tops = comm.posts.filter((p) => !p.parent && (filter === 'all' || String(p.prac) === filter));
-  const post = async () => { if (!text.trim()) return; const e = await comm.addPost(text, +prac, null); if (e) setErr(u('postErr')); else { setText(''); setErr(''); } };
-  const sendReply = async (p) => { if (!reply.trim()) return; const e = await comm.addPost(reply, p.prac, p.id); if (e) setErr(u('postErr')); else { setReply(''); setReplyTo(null); } };
+  const [topsPage, topsPager] = usePaged(tops, 10, filter, comm.focusPost ? tops.findIndex((x) => x.id === comm.focusPost) : -1);
+  const confirm = useConfirm();
+  const post = async () => { if (!text.trim()) return; if (!(await confirm({ title: u('cfPostT'), message: u('cfPostM'), quote: text.trim().slice(0, 160), ok: u('post') }))) return; const e = await comm.addPost(text, +prac, null); if (e) setErr(u('postErr')); else { setText(''); setErr(''); } };
+  const sendReply = async (p) => { if (!reply.trim()) return; if (!(await confirm({ title: u('cfReplyT'), quote: reply.trim().slice(0, 160), ok: u('reply') }))) return; const e = await comm.addPost(reply, p.prac, p.id); if (e) setErr(u('postErr')); else { setReply(''); setReplyTo(null); } };
   return (
     <div className="comm-grid">
       <div className="card">
@@ -202,7 +222,7 @@ function Discussion() {
           {err ? <p className="fb bad">{err}</p> : null}
         </div>
         <div>
-          {!tops.length ? <div className="empty">{u('noPosts')}</div> : tops.map((p) => {
+          {!tops.length ? <div className="empty">{u('noPosts')}</div> : topsPage.map((p) => {
             const reps = comm.posts.filter((x) => x.parent === p.id).sort((a, b) => a.created_at.localeCompare(b.created_at));
             return (
               <PostItem key={p.id} p={p} onReply={() => { setReplyTo(replyTo === p.id ? null : p.id); setReply(''); }}>
@@ -220,6 +240,7 @@ function Discussion() {
               </PostItem>
             );
           })}
+          {topsPager}
         </div>
       </div>
       <div className="card">
@@ -246,7 +267,7 @@ function ClassResults() {
   }).filter(Boolean);
   return (
     <div className="card">
-      <div className="chips">{Object.keys(LABS).map((k) => <button type="button" key={k} className="chip" aria-pressed={id === +k} onClick={() => setId(+k)}>{pracTag(k, u)} · {pracTitle(k, lang)}</button>)}</div>
+      <div className="res-pick"><Combobox id="resPrac" label={u('aPrac')} placeholder={u('searchPrac')} value={String(id)} onChange={(v) => setId(+v)} options={pracOptions(Object.keys(LABS), lang, u)} /></div>
       <p className="muted">{u('resHelp')}</p>
       {blocks.length ? blocks : <div className="empty">{u('noResults')}</div>}
     </div>
@@ -255,31 +276,35 @@ function ClassResults() {
 
 function ClassProgress() {
   const { u } = useT(); const comm = useCommunity(); const ago = useAgo(); const nameOf = useName();
-  if (!comm.teacher) return <div className="card"><div className="empty">{u('onlyTeachers')}</div></div>;
   const rows = [...comm.classProgress].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const [rowsPage, rowsPager] = usePaged(rows);
+  if (!comm.teacher) return <div className="card"><div className="empty">{u('onlyTeachers')}</div></div>;
   if (!rows.length) return <div className="card"><div className="empty">{u('noMembers')}</div></div>;
   return (
     <div className="card"><div className="tbl-wrap"><table className="prog-t">
       <thead><tr><th>{u('student')}</th>{Object.keys(LABS).map((k) => <th key={k}>{pracTag(k, u)}</th>)}<th>{u('lastActive')}</th></tr></thead>
-      <tbody>{rows.map((r) => (
+      <tbody>{rowsPage.map((r) => (
         <tr key={r.user_id}>
           <td className="lab">{nameOf(r.user_id)} {comm.profiles[r.user_id]?.role === 'teacher' ? <span className="tagT">{u('teacher')}</span> : null}</td>
           {Object.keys(LABS).map((k) => { const v = Math.max(0, Math.min(100, +(r.prog?.[k]) || 0)); return <td key={k} className="pc">{v}%<span className="minibar"><i style={{ width: `${v}%` }} /></span></td>; })}
           <td>{ago(r.updated_at)}</td>
         </tr>
       ))}</tbody>
-    </table></div></div>
+    </table></div>{rowsPager}</div>
   );
 }
 
 function AssignmentDetail({ id, onBack }) {
   const { u, lang } = useT(); const { update } = useLab(); const comm = useCommunity(); const ago = useAgo();
-  const [a, setA] = useState(null); const [err, setErr] = useState(''); const [note, setNote] = useState(''); const [text, setText] = useState(''); const [busy, setBusy] = useState(false); const [armed, setArmed] = useState(false);
+  const [a, setA] = useState(null); const [err, setErr] = useState(''); const [note, setNote] = useState(''); const [text, setText] = useState(''); const [busy, setBusy] = useState(false);
   const load = async () => { try { const d = await comm.getAssignment(id); setA(d); setNote(d.my_enrollment?.note || ''); setErr(''); } catch (e) { setErr(errText(e, u)); } };
   useEffect(() => { load(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
   const act = async (fn) => { setBusy(true); const e = await fn(); setBusy(false); if (e) setErr(errText(e, u)); else load(); };
-  const comment = async (e) => { e.preventDefault(); if (!text.trim()) return; setBusy(true); try { await comm.addComment(id, text.trim()); setText(''); await load(); } catch (x) { setErr(errText(x, u)); } setBusy(false); };
-  const delC = async (cid) => { try { await comm.delComment(cid); load(); } catch (x) { setErr(errText(x, u)); } };
+  const confirm = useConfirm();
+  const comment = async (e) => { e.preventDefault(); if (!text.trim()) return; if (!(await confirm({ title: u('cfCommentT'), quote: text.trim().slice(0, 160), ok: u('send') }))) return; setBusy(true); try { await comm.addComment(id, text.trim()); setText(''); await load(); } catch (x) { setErr(errText(x, u)); } setBusy(false); };
+  const delC = async (cid) => { if (!(await confirm({ title: u('cfDelCommentT'), message: u('cfDelM'), ok: u('del'), danger: true }))) return; try { await comm.delComment(cid); load(); } catch (x) { setErr(errText(x, u)); } };
+  const [comPage, comPager] = usePaged((a && a.comments) || []);
+  const [enrPage, enrPager] = usePaged((a && a.enrollments) || []);
   if (!a) return <div className="card"><button type="button" className="link" onClick={onBack}>← {u('back')}</button>{err ? <p className="fb bad">{err}</p> : <div className="empty loading" role="status"><span className="spin" aria-hidden="true" />{u('loading')}</div>}</div>;
   const mine = a.my_enrollment; const isAuthor = a.created_by === comm.uid;
   return (
@@ -293,32 +318,33 @@ function AssignmentDetail({ id, onBack }) {
       {a.description ? <p className="adesc">{a.description}</p> : null}
       {!comm.teacher ? (
         <div className="enrollBox">
-          {!mine ? <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.enroll(id))}>{u('enroll')}</button> : (
+          {!mine ? <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={async () => { if (await confirm({ title: u('cfEnrollT'), quote: a.title, ok: u('enroll') })) act(() => comm.enroll(id)); }}>{u('enroll')}</button> : (
             <>
               <div className="row"><span className={`stTag${mine.status === 'completed' ? ' done' : ''}`}>{mine.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span>{mine.completed_at ? <span className="muted">{ago(mine.completed_at)}</span> : null}</div>
               <textarea aria-label={u('doneNote')} placeholder={u('doneNote')} maxLength={1000} style={{ minHeight: 60 }} value={note} onChange={(e) => setNote(e.target.value)} />
               <div className="row">
                 {mine.status === 'completed'
-                  ? <button type="button" className="btn ghost sm" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.complete(id, note, false))}>{u('undoDone')}</button>
-                  : <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.complete(id, note, true))}>{u('markDone')}</button>}
-                {mine.status !== 'completed' ? <button type="button" className="btn ghost sm" disabled={busy} aria-busy={busy} onClick={() => act(() => comm.leave(id))}>{u('leaveA')}</button> : null}
+                  ? <button type="button" className="btn ghost sm" disabled={busy} aria-busy={busy} onClick={async () => { if (await confirm({ title: u('cfReopenT'), quote: a.title, ok: u('undoDone') })) act(() => comm.complete(id, note, false)); }}>{u('undoDone')}</button>
+                  : <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={async () => { if (await confirm({ title: u('cfDoneT'), message: u('cfDoneM'), quote: note.trim() ? note.trim().slice(0, 160) : a.title, ok: u('markDone') })) act(() => comm.complete(id, note, true)); }}>{u('markDone')}</button>}
+                {mine.status !== 'completed' ? <button type="button" className="btn ghost sm" disabled={busy} aria-busy={busy} onClick={async () => { if (await confirm({ title: u('cfLeaveT'), message: u('cfLeaveM'), quote: a.title, ok: u('leaveA'), danger: true })) act(() => comm.leave(id)); }}>{u('leaveA')}</button> : null}
               </div>
             </>
           )}
         </div>
       ) : (
         <div className="dsec">
-          <div className="rowh"><h3 className="dsec-h">{u('studentsList')}</h3>{isAuthor ? <button type="button" className="btn sm ghost" onClick={async () => { if (!armed) { setArmed(true); return; } const e = await comm.delAssignment(id); if (e) setErr(errText(e, u)); else { comm.setFocus(null); onBack(); } }}>{armed ? u('confirm') : u('del')}</button> : null}</div>
+          <div className="rowh"><h3 className="dsec-h">{u('studentsList')}</h3>{isAuthor ? <button type="button" className="btn sm ghost" onClick={async () => { if (!(await confirm({ title: u('cfDelAsgT'), message: u('cfDelAsgM'), quote: a.title, ok: u('del'), danger: true }))) return; const e = await comm.delAssignment(id); if (e) setErr(errText(e, u)); else { comm.setFocus(null); onBack(); } }}>{u('del')}</button> : null}</div>
           {a.enrollments && a.enrollments.length ? (
             <div className="tbl-wrap"><table><thead><tr><th>{u('student')}</th><th>{u('colStatus')}</th><th>{u('colNote')}</th></tr></thead><tbody>
-              {a.enrollments.map((e) => <tr key={e.student_id}><td className="lab">{e.student_name || u('someone')}</td><td><span className={`stTag${e.status === 'completed' ? ' done' : ''}`}>{e.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span></td><td style={{ fontFamily: 'var(--f-body)', textAlign: 'left' }}>{e.note}</td></tr>)}
+              {enrPage.map((e) => <tr key={e.student_id}><td className="lab">{e.student_name || u('someone')}</td><td><span className={`stTag${e.status === 'completed' ? ' done' : ''}`}>{e.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span></td><td style={{ fontFamily: 'var(--f-body)', textAlign: 'left' }}>{e.note}</td></tr>)}
             </tbody></table></div>
           ) : <div className="empty">{u('noEnrolled')}</div>}
+          {enrPager}
         </div>
       )}
       <div className="dsec">
         <h3 className="dsec-h">{u('comments')} <span className="cnt">{a.comments.length}</span></h3>
-        {a.comments.length ? a.comments.map((c) => (
+        {a.comments.length ? comPage.map((c) => (
           <div className="post" key={c.id}>
             <Avatar id={c.author} name={c.author_name} size={34} />
             <div>
@@ -328,6 +354,7 @@ function AssignmentDetail({ id, onBack }) {
             </div>
           </div>
         )) : <div className="empty">{u('noComments')}</div>}
+        {comPager}
         <form className="compose" onSubmit={comment}>
           <textarea aria-label={u('commentPh')} placeholder={u('commentPh')} maxLength={1000} style={{ minHeight: 60 }} value={text} onChange={(e) => setText(e.target.value)} />
           <div className="row"><button type="submit" className="btn sm" disabled={busy} aria-busy={busy}>{u('send')}</button></div>
@@ -340,11 +367,14 @@ function AssignmentDetail({ id, onBack }) {
 
 function Assignments() {
   const { u, lang } = useT(); const comm = useCommunity();
+  const [asgPage, asgPager] = usePaged(comm.assignments);
+  const confirm = useConfirm();
   const blank = { title: '', prac: '', due: '', description: '' };
   const [f, setF] = useState(blank); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const add = async (e) => {
     e.preventDefault(); if (!f.title.trim()) return; setBusy(true);
+    if (!(await confirm({ title: u('cfPublishT'), message: u('cfPublishM'), quote: f.title.trim(), ok: u('publish') }))) return;
     const x = await comm.addAssignment({ title: f.title.trim(), prac: f.prac ? +f.prac : null, due: f.due || null, description: f.description.trim() });
     setBusy(false); if (x) setErr(errText(x, u)); else { setF(blank); setErr(''); }
   };
@@ -367,12 +397,14 @@ function Assignments() {
           {err ? <p className="fb bad">{err}</p> : null}
         </form>
       ) : null}
-      {comm.assignments.length ? comm.assignments.map((a) => <AssignmentRow key={a.id} a={a} />) : <div className="empty">{u('noAssign')}</div>}
+      {comm.assignments.length ? asgPage.map((a) => <AssignmentRow key={a.id} a={a} />) : <div className="empty">{u('noAssign')}</div>}
+      {asgPager}
     </div>
   );
 }
 
 export default function Community() {
+  const confirm = useConfirm();
   const { u } = useT(); const comm = useCommunity();
   const [sub, setSub] = useState(comm.focus ? 'assign' : 'discuss');
   useEffect(() => { if (comm.focus) setSub('assign'); }, [comm.focus]);
@@ -385,7 +417,8 @@ export default function Community() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [comm.focusPost]); // eslint-disable-line react-hooks/exhaustive-deps
   const [nm, setNm] = useState('');
-  const tabs = [['discuss', u('discuss')], ['results', u('classResults')], ['progress', u('classProg')], ['assign', u('assignments')]];
+  const tabs = [['discuss', u('discuss')], ['results', u('classResults')], ...(comm.teacher ? [['progress', u('classProg')]] : []), ['assign', u('assignments')]];
+  useEffect(() => { if (sub === 'progress' && !comm.teacher) setSub('discuss'); }, [sub, comm.teacher]);
   let body;
   if (!comm.uid) body = <AuthCard />;
   else if (!comm.enabled) body = <div className="empty">{u('noBackend')}</div>;
@@ -395,10 +428,10 @@ export default function Community() {
     <div className="comm-page">
       <div className="rowh">
         <h2 className="sec-h">{u('navComm')}</h2>
-        {comm.uid ? <span className="row"><span className="muted">{comm.me?.name || comm.me?.email}{comm.teacher ? ` · ${u('teacher')}` : ''}</span><button type="button" className="link" onClick={comm.signOut}>{u('signOut')}</button></span> : null}
+        {comm.uid ? <span className="row"><span className="muted">{comm.me?.name || comm.me?.email}{comm.teacher ? ` · ${u('teacher')}` : ''}</span><button type="button" className="link" onClick={async () => { if (await confirm({ title: u('cfSignOutT'), message: u('cfSignOutM'), ok: u('signOut'), danger: true })) comm.signOut(); }}>{u('signOut')}</button></span> : null}
       </div>
       {needName ? (
-        <form className="card row" onSubmit={(e) => { e.preventDefault(); if (nm.trim()) comm.rename(nm.trim().slice(0, 60)); }}>
+        <form className="card row" onSubmit={async (e) => { e.preventDefault(); if (nm.trim() && await confirm({ title: u('cfNameT'), quote: nm.trim(), ok: u('saveName') })) comm.rename(nm.trim().slice(0, 60)); }}>
           <label className="fld" style={{ flex: 1 }}><span>{u('yourName')}</span><input value={nm} onChange={(e) => setNm(e.target.value)} maxLength={60} /></label>
           <button className="btn" type="submit">{u('saveName')}</button>
         </form>

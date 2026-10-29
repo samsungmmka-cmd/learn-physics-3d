@@ -68,7 +68,8 @@ export function createFakeDb({ teacherCode = 'T-CODE' } = {}) {
       const id = randomUUID(); users.set(email, { id, password });
       const m = options?.data || {};
       const role = m.role === 'teacher' && m.teacher_code === teacherCode ? 'teacher' : 'student';
-      t.profiles.push({ id, name: m.name || '', role, created_at: new Date().toISOString() });
+      const tid = role === 'student' && m.teacher_id && t.profiles.some((p) => p.id === m.teacher_id && p.role === 'teacher') ? m.teacher_id : null;
+      t.profiles.push({ id, name: m.name || '', role, teacher_id: tid, created_at: new Date().toISOString() });
       const token = `tok-${id}`; tokens.set(token, id);
       return { data: { user: { id, email, identities: [{}] }, session: { access_token: token, refresh_token: `ref-${id}`, expires_at: 9999999999 } }, error: null };
     },
@@ -91,7 +92,8 @@ export function createFakeDb({ teacherCode = 'T-CODE' } = {}) {
   const client = {
     from: query,
     auth: authApi,
-    async rpc(fn, args) { if (fn === 'check_teacher_code') return { data: args.code === teacherCode, error: null }; return { data: null, error: { message: 'no fn' } }; },
+    async rpc(fn, args) { if (fn === 'check_teacher_code') return { data: args.code === teacherCode, error: null };
+      if (fn === 'list_teachers') return { data: t.profiles.filter((p) => p.role === 'teacher').map((p) => ({ id: p.id, name: p.name })), error: null }; return { data: null, error: { message: 'no fn' } }; },
   };
   return { tables: t, sent, anon: () => client, asUser: () => client };
 }

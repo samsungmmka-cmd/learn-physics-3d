@@ -14,7 +14,10 @@ export default function assignmentRoutes() {
   // List assignments, newest first, with my enrollment status (students) or counts (teachers).
   r.get('/', async (req, res) => {
     const { sb, user } = req;
-    const rows = must(await sb.from('assignments').select(COLS).order('created_at', { ascending: false }).limit(200));
+    let q = sb.from('assignments').select(COLS).order('created_at', { ascending: false }).limit(200);
+    // Students with a chosen teacher see that teacher's assignments only.
+    if (user.role === 'student' && user.teacher_id) q = q.eq('created_by', user.teacher_id);
+    const rows = must(await q);
     // RLS returns only my own enrollments for students, and all enrollments for teachers.
     const enr = rows.length ? must(await sb.from('enrollments').select('assignment_id,student_id,status').in('assignment_id', rows.map((a) => a.id))) : [];
     const names = await namesFor(sb, rows.map((a) => a.created_by));

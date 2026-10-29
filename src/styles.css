@@ -647,3 +647,38 @@ html:is([lang="si"],[lang="ta"]) .pk{text-transform:none;letter-spacing:0}
 .gi.done small{color:var(--good);font-weight:700}
 .pf-prac .tick{margin-left:-4px}
 .gi.done{padding-right:46px}
+
+/* ---------- Confirmation dialog ---------- */
+.cf-wrap{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:16px;background:rgba(18,12,6,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:cfFade .14s ease}
+@keyframes cfFade{from{opacity:0}}
+.cf{width:min(440px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px -24px rgba(0,0,0,.55),var(--shadow);padding:20px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 14px;animation:cfIn .18s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes cfIn{from{opacity:0;transform:translateY(8px) scale(.97)}}
+.cf-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-2)}
+.cf.danger .cf-ic{background:var(--bad-soft);color:var(--bad)}
+.cf-ic svg{width:22px;height:22px}
+.cf-body{display:grid;gap:6px;min-width:0;align-content:center}
+.cf-body h3{font-size:20px;margin:0}
+.cf-body p{margin:0;color:var(--ink2);font-size:14px}
+.cf-q{margin:2px 0 0;padding:8px 12px;border-left:3px solid var(--accent);background:var(--info);border-radius:0 10px 10px 0;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere;max-height:7.5em;overflow:hidden}
+.cf.danger .cf-q{border-left-color:var(--bad)}
+.cf-acts{grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+@media (max-width:480px){ .cf-wrap{place-items:end center} .cf{border-radius:18px 18px 12px 12px} .cf-acts .btn{flex:1} }
+
+/* ---------- Pagination ---------- */
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px dashed var(--line);margin-top:4px}
+.pg-info{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pg-btns{display:flex;gap:4px;flex-wrap:wrap}
+.pg{min-width:34px;height:34px;padding:0 8px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink2);font:inherit;font-weight:700;font-size:13px;cursor:pointer;font-variant-numeric:tabular-nums}
+.pg:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.pg[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pg:disabled{opacity:.4;cursor:default}
+.pg-gap{align-self:center;color:var(--muted);padding:0 2px}
+
+/* ---------- Teacher picker / class results picker ---------- */
+.pf-teacher{display:flex;align-items:center;gap:12px}
+.pf-teacher b{display:block}
+.pf-teacher small{font-size:12px}
+.pf-tpick{align-items:flex-start}
+.pf-tpick .cbx{flex:1 1 220px}
+.res-pick{max-width:520px}

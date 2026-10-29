@@ -10,9 +10,14 @@ export const requireUser = (db) => async (req, _res, next) => {
     const sb = db.asUser(token);
     const { data, error } = await sb.auth.getUser(token);
     if (error || !data?.user) throw unauthorized('Session expired. Sign in again.');
-    const prof = must(await sb.from('profiles').select('name,role').eq('id', data.user.id).maybeSingle());
+    const prof = must(await sb.from('profiles').select('name,role,teacher_id').eq('id', data.user.id).maybeSingle());
+    let teacherName = '';
+    if (prof?.teacher_id) teacherName = (must(await sb.from('profiles').select('name').eq('id', prof.teacher_id).maybeSingle()) || {}).name || '';
     req.sb = sb;
-    req.user = { id: data.user.id, email: data.user.email, name: prof?.name || '', role: prof?.role || 'student' };
+    req.user = {
+      id: data.user.id, email: data.user.email, name: prof?.name || '', role: prof?.role || 'student',
+      teacher_id: prof?.teacher_id || null, teacher_name: teacherName,
+    };
     next();
   } catch (e) { next(e); }
 };

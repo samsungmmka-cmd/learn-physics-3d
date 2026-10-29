@@ -7,6 +7,7 @@ import { LangProvider } from './lib/i18n.jsx';
 import { LabProvider } from './lib/labStore.jsx';
 import { CommunityProvider } from './lib/community.jsx';
 import App from './App.jsx';
+import { ConfirmProvider } from './components/Confirm.jsx';
 import { applyTheme, readTheme } from './lib/theme.js';
 
 applyTheme(readTheme());
@@ -16,7 +17,9 @@ createRoot(document.getElementById('root')).render(
     <LangProvider>
       <LabProvider>
         <CommunityProvider>
-          <App />
+          <ConfirmProvider>
+            <App />
+          </ConfirmProvider>
         </CommunityProvider>
       </LabProvider>
     </LangProvider>

@@ -99,6 +99,9 @@ export function CommunityProvider({ children }) {
     resetPassword: async (password) => { try { await API.resetPassword(recovery, password); setRecovery(null); setAuthMode('in'); return null; } catch (e) { return e; } },
     signOut: () => { setAuthMode('in'); setFocus(null); API.signOut(); },
     rename: wrap(async (name) => { const u = await API.api('PATCH', '/auth/me', { name }); API.saveUser(u); }),
+    // Registered teachers (public list) and the student's chosen teacher.
+    listTeachers: async () => { try { return (await API.api('GET', '/auth/teachers')).teachers || []; } catch { return []; } },
+    setTeacher: wrap(async (teacherId) => { const u = await API.api('PATCH', '/auth/me', { teacherId: teacherId || null }); API.saveUser(u); }),
     addPost: wrap((body, prac, parent) => API.api('POST', '/posts', { body, prac: prac || 0, parent: parent || null })),
     delPost: wrap((id) => API.api('DELETE', `/posts/${id}`)),
     shareResult: wrap((prac, vals) => API.api('PUT', '/results', { prac, vals })),

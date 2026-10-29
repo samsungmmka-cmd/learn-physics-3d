@@ -131,6 +131,34 @@ describe('with a database', () => {
     await request(app).post('/api/auth/login').send({ email: 'kamal@school.lk', password: 'password123' }).expect(401);
     await request(app).post('/api/auth/login').send({ email: 'kamal@school.lk', password: 'newpassword1' }).expect(200);
   });
+  it('lists teachers and links a student to a teacher', async () => {
+    const r = await request(app).get('/api/auth/teachers').expect(200);
+    assert.equal(r.body.teachers.length, 1); assert.equal(r.body.teachers[0].name, 'Ms Perera');
+    const tid = r.body.teachers[0].id;
+    const s2 = (await request(app).post('/api/auth/signup').send({ email: 'nimal@school.lk', password: 'password123', name: 'Nimal', teacherId: tid }).expect(201)).body;
+    assert.equal(s2.user.teacher_id, tid); assert.equal(s2.user.teacher_name, 'Ms Perera');
+    // a second teacher publishes; Nimal (Ms Perera's class) must not see it, Kamal (no teacher) still sees everything
+    const t2 = (await request(app).post('/api/auth/signup').send({ email: 't2@school.lk', password: 'password123', name: 'Mr Fernando', role: 'teacher', teacherCode: 'PHYS-1' }).expect(201)).body;
+    await request(app).post('/api/assignments').set(as(t2)).send({ title: 'Other class work' }).expect(201);
+    const seen = (await request(app).get('/api/assignments').set(as(s2)).expect(200)).body.assignments.map((a) => a.title);
+    assert.ok(!seen.includes('Other class work')); assert.ok(seen.includes('Vernier caliper lab'));
+    const all = (await request(app).get('/api/assignments').set(as(student)).expect(200)).body.assignments.map((a) => a.title);
+    assert.ok(all.includes('Other class work'));
+    // change teacher from the profile
+    const me = (await request(app).patch('/api/auth/me').set(as(s2)).send({ teacherId: t2.user.id }).expect(200)).body;
+    assert.equal(me.teacher_name, 'Mr Fernando');
+    const seen2 = (await request(app).get('/api/assignments').set(as(s2)).expect(200)).body.assignments.map((a) => a.title);
+    assert.deepEqual(seen2, ['Other class work']);
+    await request(app).patch('/api/auth/me').set(as(s2)).send({ teacherId: s2.user.id }).expect(400); // not a teacher
+    await request(app).patch('/api/auth/me').set(as(t2)).send({ teacherId: tid }).expect(400); // teachers don't pick
+    await request(app).patch('/api/auth/me').set(as(s2)).send({}).expect(400);
+    // teacher class progress only lists their own students
+    await request(app).put('/api/progress').set(as(s2)).send({ prog: { 1: 10 } }).expect(200);
+    const pr = (await request(app).get('/api/progress').set(as(teacher)).expect(200)).body.progress.map((x) => x.name);
+    assert.ok(!pr.includes('Nimal'));
+    const pr2 = (await request(app).get('/api/progress').set(as(t2)).expect(200)).body.progress.map((x) => x.name);
+    assert.ok(pr2.includes('Nimal'));
+  });
   it('teachers delete their assignment', async () => {
     await request(app).delete(`/api/assignments/${assignmentId}`).set(as(student)).expect(403);
     await request(app).delete(`/api/assignments/${assignmentId}`).set(as(teacher)).expect(204);

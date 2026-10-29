@@ -3,6 +3,7 @@ import { validate } from '../middleware/validate.js';
 import { forbidden, must } from '../lib/errors.js';
 import { namesFor, withAuthor } from '../lib/names.js';
 import * as S from '../schemas.js';
+import { classMembers } from '../lib/class.js';
 
 const byId = validate({ params: S.uuidParam });
 
@@ -41,7 +42,9 @@ export default function communityRoutes() {
   r.get('/results', validate({ query: S.listResults }), async (req, res) => {
     let q = req.sb.from('results').select('user_id,prac,vals,updated_at');
     if (req.valid.query.prac) q = q.eq('prac', req.valid.query.prac);
-    res.json({ results: must(await q) });
+    const members = await classMembers(req.sb, req.user);
+    const rows = must(await q);
+    res.json({ results: members ? rows.filter((r) => members.has(r.user_id)) : rows });
   });
 
   r.put('/results', validate({ body: S.putResult }), async (req, res) => {
@@ -52,7 +55,8 @@ export default function communityRoutes() {
 
   // ----- practical progress (students see their own, teachers see the class) -----
   r.get('/progress', async (req, res) => {
-    const rows = must(await req.sb.from('progress').select('user_id,prog,updated_at').order('updated_at', { ascending: false }));
+    let rows = must(await req.sb.from('progress').select('user_id,prog,updated_at').order('updated_at', { ascending: false }));
+    if (req.user.role === 'teacher') { const members = await classMembers(req.sb, req.user); rows = rows.filter((r) => members.has(r.user_id)); }
     const names = await namesFor(req.sb, rows.map((p) => p.user_id));
     res.json({
       scope: req.user.role === 'teacher' ? 'class' : 'self',
