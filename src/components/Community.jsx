@@ -318,7 +318,12 @@ function AssignmentDetail({ id, onBack }) {
       {a.description ? <p className="adesc">{a.description}</p> : null}
       {!comm.teacher ? (
         <div className="enrollBox">
-          {!mine ? <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={async () => { if (await confirm({ title: u('cfEnrollT'), quote: a.title, ok: u('enroll') })) act(() => comm.enroll(id)); }}>{u('enroll')}</button> : (
+          {!mine ? (
+            <div className="enrollCta">
+              <div><b>{u('enrollQ')}</b><span className="muted">{u('enrollHelp')}</span></div>
+              <button type="button" className="btn" disabled={busy} aria-busy={busy} onClick={async () => { if (await confirm({ title: u('cfEnrollT'), quote: a.title, ok: u('enroll') })) act(() => comm.enroll(id)); }}>{u('enroll')}</button>
+            </div>
+          ) : (
             <>
               <div className="row"><span className={`stTag${mine.status === 'completed' ? ' done' : ''}`}>{mine.status === 'completed' ? u('stCompleted') : u('stEnrolled')}</span>{mine.completed_at ? <span className="muted">{ago(mine.completed_at)}</span> : null}</div>
               <textarea aria-label={u('doneNote')} placeholder={u('doneNote')} maxLength={1000} style={{ minHeight: 60 }} value={note} onChange={(e) => setNote(e.target.value)} />
@@ -373,8 +378,9 @@ function Assignments() {
   const [f, setF] = useState(blank); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const add = async (e) => {
-    e.preventDefault(); if (!f.title.trim()) return; setBusy(true);
+    e.preventDefault(); if (!f.title.trim()) return;
     if (!(await confirm({ title: u('cfPublishT'), message: u('cfPublishM'), quote: f.title.trim(), ok: u('publish') }))) return;
+    setBusy(true);
     const x = await comm.addAssignment({ title: f.title.trim(), prac: f.prac ? +f.prac : null, due: f.due || null, description: f.description.trim() });
     setBusy(false); if (x) setErr(errText(x, u)); else { setF(blank); setErr(''); }
   };

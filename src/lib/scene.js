@@ -2,22 +2,38 @@ import { LABS, PRAC } from '../data/content.js';
 import { curMeas, measSize } from './calc.js';
 import { pTitle } from './ptitle.js';
 
+// Practical 4: what the travelling microscope looks at for a given activity.
+function travelPlace(ls, m, ri, mode) {
+  const [cx, cy] = (ls.pos && ls.pos[m.act]) || [60, 70];
+  return { mode, obj: m.obj, edge: m.edge, din: m.din, dout: m.dout, cx, cy, ri };
+}
+
 // Mirrors the handbook flow: which instrument, object and labels the 3D stage shows for the current step.
 export function sceneSpec(st, hero, theoryE, L, u, lang) {
   const id = st.cur, lab = LABS[id], ls = st.labs[id], sec = hero ? 0 : st.sec;
   const p = PRAC.find((x) => x[0] === String(id));
-  let type = lab.inst, place = { mode: 'show', surf: 'flat' }, hud = '', sub = '', zeroAt = false, hint = false;
+  const travel = lab.inst === 'travel';
+  let type = lab.inst, place = { mode: 'show', surf: 'flat' }, hud = '', sub = '', zeroAt = false, hint = false, ctrl;
   const setup = ls.lc && ls.zero;
+  const setupName = lab.inst === 'sphero' ? u('init') : travel ? u('levelT') : u('zero');
+  if (travel) place = travelPlace(ls, lab.meas[0], 0, 'show');
   if (hero) { hud = `${u('pracNo')} ${String(id).padStart(2, '0')}`; sub = pTitle(p, lang); }
   else if (sec === 0) hud = u('parts');
-  else if (sec === 1) { place = { mode: 'none', surf: 'flat' }; hud = `${u('lc')} · ${lab.inst === 'sphero' ? u('init') : u('zero')}`; if (theoryE !== null && lab.inst !== 'sphero') { zeroAt = true; hint = true; } }
-  else if (!setup) { place = { mode: 'none', surf: 'flat' }; hud = !ls.lc ? u('lc') : lab.inst === 'sphero' ? u('init') : u('zero'); }
-  else {
+  else if (sec === 1) {
+    place = travel ? travelPlace(ls, lab.meas[0], 0, 'none') : { mode: 'none', surf: 'flat' };
+    hud = travel ? u('lc') : `${u('lc')} · ${setupName}`;
+    if (theoryE !== null && lab.inst !== 'sphero' && !travel) { zeroAt = true; hint = true; }
+  } else if (!setup) {
+    if (travel) place = ls.lc ? { ...travelPlace(ls, lab.meas[0], 0, 'level'), tilt: ls.tilt || 0 } : travelPlace(ls, lab.meas[0], 0, 'none');
+    else place = { mode: 'none', surf: 'flat' };
+    hud = !ls.lc ? u('lc') : setupName;
+  } else {
     const m = curMeas(ls, id); const ri = Math.min((ls.rec[m.key] || []).length, m.n - 1);
     type = m.rig || lab.inst;
-    place = { mode: m.mode || 'outer', obj: m.obj, pose: m.pose, size: measSize(ls, m, ri), ri, surf: m.surf };
-    hud = L(m.label); sub = L(lab.acts[m.act]);
+    place = travel ? travelPlace(ls, m, ri, 'meas') : { mode: m.mode || 'outer', obj: m.obj, pose: m.pose, size: measSize(ls, m, ri), ri, surf: m.surf };
+    hud = travel ? `${L(m.label)} · ${m.heads[ri]}` : L(m.label); sub = L(lab.acts[m.act]);
   }
+  if (travel) ctrl = place.mode === 'level' ? 'level' : place.mode === 'meas' && place.ri >= 2 ? 'travelY' : 'travelX';
   let e = 0;
   if (type === 'caliper') e = id === 1 ? (sec === 1 && theoryE !== null ? theoryE : ls.e) : 0;
   if (type === 'micro') e = sec === 1 && theoryE !== null ? theoryE : ls.e;
@@ -26,5 +42,5 @@ export function sceneSpec(st, hero, theoryE, L, u, lang) {
   const partsLab = type === lab.inst ? lab : Object.values(LABS).find((x) => x.inst === type);
   const labels = partsLab ? partsLab.parts.map(([k, n]) => [k, L(n)]) : [];
   const room = sec === 0;
-  return { spec: { type, place, e, S0: ls.S0, labels, room, zeroAt, hint }, hud, sub };
+  return { spec: { type, place, e, S0: ls.S0, labels, room, zeroAt, hint, ...(ctrl ? { ctrl } : {}) }, hud, sub };
 }

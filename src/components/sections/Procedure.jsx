@@ -10,6 +10,7 @@ const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
 const head = (m, i) => (m.heads ? m.heads[i] : `(${ROMAN[i]})`);
 
 export function corrRule(m, lab, ls, u) {
+  if (lab.inst === 'travel') return '';
   if (lab.inst === 'sphero' && !m.rig) return `${u('corr')} = ${u('reading')} − ${fmt(ls.S0rec, 2)}`;
   if (m.rig === 'caliper') return '';
   const e = lab.unit === 'cm' ? ls.e / 10 : ls.e;
@@ -25,10 +26,10 @@ function MiniTable({ m, lab, ls }) {
         <thead><tr><th />{recs.map((r, i) => <th key={i}>{head(m, i)}</th>)}</tr></thead>
         <tbody>
           <tr><td className="lab">{u('reading')}</td>{recs.map((r, i) => <td key={i}>{fmt(r.raw, d)}</td>)}</tr>
-          <tr><td className="lab">{u('corr')}</td>{recs.map((r, i) => <td key={i}>{fmt(r.corr, d)}</td>)}</tr>
+          {lab.inst === 'travel' ? null : <tr><td className="lab">{u('corr')}</td>{recs.map((r, i) => <td key={i}>{fmt(r.corr, d)}</td>)}</tr>}
         </tbody>
       </table></div>
-      <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>{corrRule(m, lab, ls, u)}</p>
+      {corrRule(m, lab, ls, u) ? <p style={{ fontSize: 12.5, color: 'var(--muted)' }}>{corrRule(m, lab, ls, u)}</p> : null}
     </>
   );
 }
@@ -38,6 +39,25 @@ function PairNote({ pair, lang }) {
   return lang === 'si'
     ? <p className="fb info">ගෝලමානයේ පාද තුන කඩදාසිය මත තද කළ විට A, B, C සලකුණු සෑදුණි. අචල හනුවේ තුඩ <b>{pair[0]}</b> සලකුණ මත තබා, සර්පණ හනුවේ තුඩ <b>{pair[1]}</b> සලකුණ මතට ගෙන එන්න. (තැඹිලි ඉර = මනින දුර {pair})</p>
     : <p className="fb info">The marks A, B and C were made by pressing the spherometer’s three legs onto the paper. The fixed jaw tip is on mark <b>{pair[0]}</b>. Slide the moving jaw until its tip sits on mark <b>{pair[1]}</b>. (Orange line = distance {pair} being measured.)</p>;
+}
+
+// Practical 4: which edge the crosswire should touch for this reading.
+function EdgeNote({ m, i }) {
+  const { u, L } = useT();
+  const edge = [u('edgeL'), u('edgeR'), u('edgeT'), u('edgeB')][i];
+  const what = m.edge === 'out'
+    ? L({ si: 'නළයේ බාහිර පෘෂ්ඨයේ', en: 'outside of the tube', ta: 'குழாயின் வெளிப்புறத்தின்' })
+    : L({ si: 'සිදුරේ', en: 'bore', ta: 'துளையின்' });
+  const wire = i < 2 ? L({ si: 'සිරස් හරස් කම්බිය', en: 'vertical crosswire', ta: 'நிலைக்குத்துக் குறுக்குக்கம்பி' }) : L({ si: 'තිරස් හරස් කම්බිය', en: 'horizontal crosswire', ta: 'கிடைக் குறுக்குக்கம்பி' });
+  const move = i < 2 ? L({ si: 'අණ්වීක්ෂය තිරස්ව', en: 'the microscope sideways', ta: 'நுணுக்குக்காட்டியைப் பக்கவாட்டில்' }) : L({ si: 'අණ්වීක්ෂය සිරස්ව', en: 'the microscope up or down', ta: 'நுணுக்குக்காட்டியை மேலும் கீழும்' });
+  const head = m.heads[i];
+  return (
+    <p className="fb info">{L({
+      si: `${head}: ${wire} ${what} ${edge} ස්පර්ශ වන තුරු ${move} චලනය කරන්න, ඉන්පසු ${i < 2 ? 'තිරස්' : 'සිරස්'} පරිමාණය කියවන්න.`,
+      en: `${head}: move ${move} until the ${wire} just touches the ${edge} of the ${what}, then read the ${i < 2 ? 'horizontal' : 'vertical'} scale.`,
+      ta: `${head}: ${wire} ${what} ${['இடது விளிம்பை', 'வலது விளிம்பை', 'மேல் விளிம்பை', 'கீழ் விளிம்பை'][i]}த் தொடும் வரை ${move} நகர்த்தி, ${i < 2 ? 'கிடை' : 'நிலைக்குத்து'} அளவுகோலை வாசிக்கவும்.`,
+    })}<br /><span className="muted" style={{ fontSize: 12 }}>{u('lensTip')}</span></p>
+  );
 }
 
 export default function Procedure() {
@@ -59,11 +79,13 @@ export default function Procedure() {
   const unit = m.rig === 'caliper' && lab.unit === 'mm' ? 'mm' : lab.unit;
   const setLab = (fn) => update((n) => fn(n.labs[n.cur]));
 
-  const hint = () => { eng.setHint(true); setFb(['info', eng.rig && eng.rig.contact() ? eng.rig.hintText(lang) : m.mode === 'free' ? u('notMarks') : u('notContact')]); };
+  const travel = lab.inst === 'travel';
+  const offMsg = travel ? u('notEdge') : m.mode === 'free' ? u('notMarks') : u('notContact');
+  const hint = () => { eng.setHint(true); setFb(['info', eng.rig && eng.rig.contact() ? eng.rig.hintText(lang) : offMsg]); };
   const record = () => {
     const R = eng.rig;
     if (m.paper && pe > 1) { setFb(['bad', u('pctBad')]); return; }
-    if (!R || !R.contact()) { setFb(['bad', m.mode === 'free' ? u('notMarks') : u('notContact')]); return; }
+    if (!R || !R.contact()) { setFb(['bad', offMsg]); return; }
     if (R.type === 'micro' && R.squeeze > 0) { setFb(['bad', u('tightMsg')]); return; }
     const v = parseFloat(val);
     if (!Number.isFinite(v)) { setFb(['bad', u('wrongRead')]); return; }
@@ -71,11 +93,11 @@ export default function Procedure() {
     if (Math.abs(inMM - R.ideal()) > R.tol) { setFb(['bad', u('wrongRead')]); return; }
     let corr;
     if (lab.inst === 'sphero' && !m.rig) corr = v - ls.S0rec;
-    else if (m.rig === 'caliper' && id === 3) corr = v;
+    else if ((m.rig === 'caliper' && id === 3) || travel) corr = v;
     else corr = v - (lab.unit === 'cm' ? ls.e / 10 : ls.e);
     setLab((L2) => { (L2.rec[m.key] = L2.rec[m.key] || []).push({ raw: v, corr }); if (L2.rec[m.key].length >= m.n) L2.mk = null; });
     setVal(''); eng.setHint(false);
-    setFb(['good', `${u('correct')} ${u('corr')}: ${fmt(corr, m.dp || lab.dp)}`]);
+    setFb(['good', `${u('correct')} ${travel ? u('reading') : u('corr')}: ${fmt(corr, m.dp || lab.dp)}`]);
   };
 
   return (
@@ -115,6 +137,7 @@ export default function Procedure() {
         <div className="card">
           <h3>{u('readingOf')}: {L(m.label)} <span className="st" style={{ color: 'var(--accent)' }}>{head(m, recs.length)}</span></h3>
           {m.mode === 'free' ? <PairNote pair={['AB', 'BC', 'CA'][recs.length % 3]} lang={lang} /> : null}
+          {travel ? <EdgeNote m={m} i={recs.length} /> : null}
           <div className="row"><span>{u('reading')}</span>
             <input className="num" inputMode="decimal" autoComplete="off" aria-label={u('reading')} value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') record(); }} />
             <span className="unit">{unit}</span></div>

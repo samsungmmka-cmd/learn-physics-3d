@@ -15,7 +15,7 @@ export default function Results() {
   const [shareMsg, setShareMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const rows = [];
-  lab.meas.forEach((x) => { if (mm[x.key] !== undefined) rows.push([L(x.label), fmt(mm[x.key], (x.dp || lab.dp) + 1), false]); });
+  lab.meas.forEach((x) => { if (!x.noMean && mm[x.key] !== undefined) rows.push([L(x.label), fmt(mm[x.key], (x.dp || lab.dp) + 1), false]); });
   lab.calcs.forEach((c) => { const cv = ls.calc[c.key]; rows.push([L(c.label), cv && cv.ok ? `${cv.v} ${c.unit}` : null, true]); });
   const share = async () => {
     if (!comm.enabled) { setShareMsg(u('offline')); return; }

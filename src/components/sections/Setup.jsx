@@ -24,7 +24,7 @@ export function LcCard() {
     <div className={`card${ls.lc ? ' done' : ''}`}>
       <h3>{u('lc')}{ls.lc ? <span className="st">✓</span> : null}</h3>
       <p>{L(lab.lcQ)}</p>
-      {lab.inst !== 'caliper' ? <div className="row"><button type="button" className="btn ghost sm" onClick={turnOne}>{u('turnOne')}</button></div> : null}
+      {lab.inst === 'micro' || lab.inst === 'sphero' ? <div className="row"><button type="button" className="btn ghost sm" onClick={turnOne}>{u('turnOne')}</button></div> : null}
       <div className="row">
         <input className={`num${ls.lc ? ' ok' : ''}`} inputMode="decimal" aria-label={u('lc')} value={ls.lc ? lab.lcAns : v} disabled={ls.lc}
           onChange={(e) => { setV(e.target.value); setBad(false); }} onKeyDown={(e) => { if (e.key === 'Enter') check(); }} />
@@ -58,6 +58,22 @@ export function ZeroCard() {
     if (!side || (side === 'sub') !== ls.e > 0) { setFb(['bad', L({ si: 'විශාලත්වය නිවැරදියි. ශුන්‍යය පිහිටා ඇත්තේ කුමන පැත්තේ දැයි නැවත සලකා බලන්න.', en: 'The size is right. Look again at which side of the zero line the scale zero sits.', ta: 'பருமன் சரி. அளவுகோலின் பூச்சியம் பூச்சியக் கோட்டின் எப்பக்கத்தில் உள்ளது என மீண்டும் பார்க்கவும்.' })]); return; }
     update((n) => { n.labs[n.cur].zero = true; });
   };
+  if (lab.inst === 'travel') {
+    // Practical 4 has no zero error: the setup step is levelling the microscope with the spirit level.
+    const checkLevel = () => { const R = eng.rig; if (R && R.mode === 'level' && R.contact()) update((n) => { n.labs[n.cur].zero = true; }); else setFb(['bad', u('notLevelMsg')]); };
+    return (
+      <div className={`card${ls.zero ? ' done' : ''}`}>
+        <h3>{u('levelT')}{ls.zero ? <span className="st">✓</span> : null}</h3>
+        {ls.zero ? <p className="fb good">{u('levelDone')}</p> : ls.lc ? (
+          <>
+            <p>{L(lab.zeroQ)}</p>
+            <div className="row"><button type="button" className="btn" onClick={checkLevel}>{u('check')}</button><button type="button" className="btn ghost sm" onClick={() => setFb(['info', eng.rig && eng.rig.hintText ? eng.rig.hintText(lang) : ''])}>{u('hint')}</button></div>
+            {fb ? <p className={`fb ${fb[0]}`}>{fb[1]}</p> : null}
+          </>
+        ) : <p className="muted">{L(lab.zeroQ)}</p>}
+      </div>
+    );
+  }
   if (sph) {
     return (
       <div className={`card${ls.zero ? ' done' : ''}`}>

@@ -7,6 +7,10 @@ const CONTROLS = {
   caliper: [{ t: '⏪', v: -25, s: -5 }, { t: '◀', v: -1.5, s: -0.05 }, { t: '▶', v: 1.5, s: 0.05 }, { t: '⏩', v: 25, s: 5 }],
   micro: [{ t: '⏪', v: -2, s: -0.5 }, { t: '◀', v: -0.1, s: -0.01 }, { t: '▶', v: 0.1, s: 0.01 }, { t: '⏩', v: 2, s: 0.5 }, { t: 'ratchet', v: -1.2, s: -0.01, ratchet: true }],
   sphero: [{ t: '▼▼', v: -1.2, s: -0.5 }, { t: '▼', v: -0.06, s: -0.01 }, { t: '▲', v: 0.06, s: 0.01 }, { t: '▲▲', v: 1.2, s: 0.5 }],
+  // travelling microscope: one screw at a time (horizontal, vertical, or the levelling screw)
+  travelX: [{ t: '⏪', v: -4, s: -1 }, { t: '◀', v: -0.12, s: -0.01 }, { t: '▶', v: 0.12, s: 0.01 }, { t: '⏩', v: 4, s: 1 }],
+  travelY: [{ t: '▼▼', v: -4, s: -1 }, { t: '▼', v: -0.12, s: -0.01 }, { t: '▲', v: 0.12, s: 0.01 }, { t: '▲▲', v: 4, s: 1 }],
+  level: [{ t: '⟲', v: -0.4, s: -0.05 }, { t: '⟳', v: 0.4, s: 0.05 }],
 };
 
 function HoldButton({ c, label, wide }) {
@@ -68,7 +72,7 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
     return () => window.removeEventListener('keydown', onKey);
   }, [eng]);
 
-  const controls = CONTROLS[spec.type] || [];
+  const ctrlKey = spec.ctrl || spec.type; const controls = CONTROLS[ctrlKey] || [];
   return (
     <div className={`stage ${className}`} data-mode={mode}>
       <div className="stage-host" ref={host} />
@@ -99,7 +103,7 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
             <canvas ref={loupeRef} />
           </div>
           <div className="ctrlbar">
-            <span className="cap">{L(UI.ctrl[spec.type])}</span>
+            <span className="cap">{L(UI.ctrl[ctrlKey])}</span>
             <div className="hold">{controls.filter((c) => !c.ratchet).map((c) => <HoldButton key={c.t} c={c} label={c.t} />)}</div>
             {controls.filter((c) => c.ratchet).map((c) => <HoldButton key="r" c={c} label={u('ratchet')} wide />)}
           </div>

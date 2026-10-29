@@ -11,7 +11,16 @@ export function freshLab(id) {
     e: id === 1 ? pick([0.3, 0.2, -0.2, -0.1]) : id === 2 ? pick([0.02, 0.03, -0.01, -0.02]) : 0,
     S0: id === 3 ? Math.round(rand(420, 690)) / 100 : 0,
     S0rec: null, act: 0, mk: null, rec: {}, means: {}, calc: {}, N: 20, notes: '',
+    ...(id === 4 ? travelStart() : {}),
   };
+}
+
+// Practical 4: the microscope starts tilted (to be levelled), and each tube sits at its own spot
+// on the scales (centre of the circle, in mm, on the 0.01 mm grid).
+function travelStart() {
+  const grid = (a, b) => Math.round(rand(a, b) * 100) / 100;
+  const tilt = pick([-1, 1]) * Math.round(rand(14, 30)) * 0.05;
+  return { tilt: +tilt.toFixed(2), pos: [0, 1, 2].map(() => [grid(52, 96), grid(58, 84)]) };
 }
 
 export function progress(st, id) {
@@ -20,7 +29,7 @@ export function progress(st, id) {
   let tot = 2, done = (ls.lc ? 1 : 0) + (ls.zero ? 1 : 0);
   lab.meas.forEach((m) => {
     tot += m.n; done += Math.min(m.n, (ls.rec[m.key] || []).length);
-    if (m.n > 1) { tot++; if (ls.means[m.key] && ls.means[m.key].ok) done++; }
+    if (m.n > 1 && !m.noMean) { tot++; if (ls.means[m.key] && ls.means[m.key].ok) done++; }
   });
   lab.calcs.forEach((c) => { tot++; if (ls.calc[c.key] && ls.calc[c.key].ok) done++; });
   return done / tot;
@@ -43,7 +52,7 @@ export function measSize(ls, m, ri) {
   return m.vals[Math.min(ri, m.vals.length - 1)];
 }
 
-export const shareKeys = (id) => ({ 1: ['V1', 'V2', 'V3', 'V4'], 2: ['dw', 'db', 'ts', 'P1'], 3: ['ts', 'R'] }[id] || []);
+export const shareKeys = (id) => ({ 1: ['V1', 'V2', 'V3', 'V4'], 2: ['dw', 'db', 'ts', 'P1'], 3: ['ts', 'R'], 4: ['Dc', 'Di', 'Do'] }[id] || []);
 
 export function myShare(st, id) {
   const lab = LABS[id], ls = st.labs[id]; if (!ls) return {};

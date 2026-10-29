@@ -28,6 +28,11 @@ function CalcCard({ c, mm, ls, ready }) {
     setMsg(['', ok ? u('correct') : L({ si: 'ගණනය නැවත පරීක්ෂා කරන්න.', en: 'Check your working again.', ta: 'உங்கள் கணிப்பை மீண்டும் சரிபார்க்கவும்.' }), ok]);
   };
   const work = () => {
+    const lab = LABS[ls._id];
+    if (c.src) { // crosswire readings (practical 4): show each reading, then the diameter
+      const m = lab.meas.find((x) => x.key === c.src); const r = ls.rec[c.src] || [];
+      setMsg(['info', `${m.heads.map((h, i) => `${h} = ${fmt(r[i] && r[i].corr, 3)}`).join(', ')} → ${L(c.label)} = ${fmt(val, dp)} ${c.unit}`]); return;
+    }
     const parts = Object.entries(mm).filter(([k]) => LABS[ls._id].meas.find((x) => x.key === k && x.act === c.act)).map(([k, x]) => `${k} = ${fmt(x, 4)}`).join(', ');
     setMsg(['info', `${parts}${c.key === 'P1' ? `, N = ${ls.N}` : ''} → ${L(c.label)} = ${fmt(val, dp)} ${c.unit}`]);
   };
@@ -60,14 +65,14 @@ export default function Readings() {
   const mm = measMeans(ls, id);
   return (
     <>
-      <p style={{ fontSize: 13.5 }}>{u('lc')} = {lab.lcAns} mm · {lab.inst === 'sphero' ? `${u('init')} = ${fmt(ls.S0rec, 2)} mm` : `${u('zero')} = ${fmt(Math.abs(ls.e), lab.inst === 'micro' ? 2 : 1)} mm (${ls.e > 0 ? u('subtract') : u('add')})`}</p>
-      <p style={{ fontSize: 13, color: 'var(--muted)' }}>{u('enterMeans')}</p>
+      <p style={{ fontSize: 13.5 }}>{u('lc')} = {lab.lcAns} mm · {lab.inst === 'travel' ? `${u('levelled')} ✓` : lab.inst === 'sphero' ? `${u('init')} = ${fmt(ls.S0rec, 2)} mm` : `${u('zero')} = ${fmt(Math.abs(ls.e), lab.inst === 'micro' ? 2 : 1)} mm (${ls.e > 0 ? u('subtract') : u('add')})`}</p>
+      {lab.meas.some((x) => x.n > 1 && !x.noMean) ? <p style={{ fontSize: 13, color: 'var(--muted)' }}>{u('enterMeans')}</p> : null}
       {Object.entries(tables).map(([tid, rows]) => {
-        const nc = Math.max(...rows.map((r) => r.n)); const heads = (rows[0].heads || ROMAN).slice(0, nc); const hasMean = rows.some((r) => r.n > 1);
+        const nc = Math.max(...rows.map((r) => r.n)); const heads = (rows[0].heads || ROMAN).slice(0, nc); const hasMean = rows.some((r) => r.n > 1 && !r.noMean);
         return (
           <div className="tbl-wrap" key={tid}><table>
             <caption>{/^\d/.test(tid) ? `${tid} ${u('table')}` : L(rows[0].label)}</caption>
-            <thead><tr><th>{u('corr')}</th>{heads.map((h) => <th key={h}>{h}</th>)}{hasMean ? <th>{u('mean')}</th> : null}</tr></thead>
+            <thead><tr><th>{lab.inst === 'travel' ? u('reading') : u('corr')}</th>{heads.map((h) => <th key={h}>{h}</th>)}{hasMean ? <th>{u('mean')}</th> : null}</tr></thead>
             <tbody>
               {rows.map((r) => {
                 const rec = ls.rec[r.key] || [], d = r.dp || lab.dp, full = rec.length >= r.n;
