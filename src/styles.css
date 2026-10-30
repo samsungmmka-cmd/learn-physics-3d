@@ -370,7 +370,8 @@ body[data-view="lab"] .status{display:none}
 .acct-btns{flex:0 0 auto}
 @media (max-width:420px){
   .hdr{gap:10px}
-  .wordmark .tag{display:none}
+  .wordmark .tag{display:block;font-size:9.5px;letter-spacing:.12em;margin-top:5px;line-height:1.4}
+  html:is([lang="si"],[lang="ta"]) .wordmark .tag{letter-spacing:0;font-size:10.5px}
   .acct{max-width:38vw;padding:5px 10px}
 }
 @media (max-width:420px){ .acct .tagT{display:none} .acct{max-width:34vw} }
