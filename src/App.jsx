@@ -78,9 +78,9 @@ export default function App() {
       </section>
       <nav ref={navRef} className={`nav${scrolled ? ' scrolled' : ''}`} aria-label="Main">
         {NAV.map(([k, t, ic]) => (
-          <button key={k} type="button" aria-current={view === k ? 'page' : undefined} onClick={() => go(k)}>
+          <button key={k} type="button" title={u(t)} aria-current={view === k ? 'page' : undefined} onClick={() => go(k)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">{ic}</svg>
-            <span>{u(t)}</span>
+            <span className="nav-t">{u(t)}</span>
           </button>
         ))}
         <UserMenu go={go} current={view === 'profile'} />
