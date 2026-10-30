@@ -65,7 +65,6 @@ export const TA_UI = {
   ratchet: 'இராச்சற்று ⟳',
   bookEx: 'கைந்நூல் உதாரணங்கள்',
   yourInst: 'உங்கள் கருவி',
-  tagline: 'அள · அவதானி · பதி · பகிர்',
   navHome: 'முகப்பு',
   navList: 'செய்முறைகள்',
   navLab: 'ஆய்வுகூடம்',

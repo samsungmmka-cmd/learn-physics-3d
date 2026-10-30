@@ -13,6 +13,9 @@ import UserMenu from './components/UserMenu.jsx';
 import Profile from './components/Profile.jsx';
 import GlobalLoader from './components/GlobalLoader.jsx';
 
+// The tagline stays in English whatever language is selected.
+const TAGLINE = 'Measure · Observe · Record · Share';
+
 const NAV = [
   ['home', 'navHome', <path key="h" d="M4 11 12 4l8 7v9h-5v-6H9v6H4Z" />],
   ['list', 'navList', [<path key="a" d="M3 6c3-1.3 6-1.3 9 1v13c-3-2.3-6-2.3-9-1Z" />, <path key="b" d="M21 6c-3-1.3-6-1.3-9 1v13c3-2.3 6-2.3 9-1Z" />]],
@@ -59,7 +62,7 @@ export default function App() {
     <div className="shell">
       <header className="hdr">
         <svg className="logo" viewBox="0 0 52 52" aria-hidden="true"><path d="M26 6 46 42H6Z" fill="none" stroke="var(--accent)" strokeWidth="5" strokeLinejoin="round" /><path d="M2 30 L20 26" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" /><path d="M33 25 L50 20M34 29 L50 28M34 33 L50 36" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" /></svg>
-        <div className="wordmark"><h1>Learn <em>Physics</em></h1><div className="tag">{u('tagline')}</div></div>
+        <div className="wordmark"><h1>Cubi<em>phy</em></h1><div className="tag" lang="en">{TAGLINE}</div></div>
         <span className="sp" />
         {comm.online > 0 ? <div className="hereNow"><i /><span>{comm.online} {u('hereNow')}</span></div> : null}
       </header>

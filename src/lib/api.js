@@ -1,4 +1,4 @@
-// Small client for the Learn Physics API (/api/*). Keeps the session in localStorage and
+// Small client for the Cubiphy API (/api/*). Keeps the session in localStorage and
 // refreshes the access token automatically when it expires.
 const KEY = 'lp-session-v1';
 // Where the backend API lives, e.g. https://learn-physics-api.vercel.app/api (set VITE_API_URL at build time).

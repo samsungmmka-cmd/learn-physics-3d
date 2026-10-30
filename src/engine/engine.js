@@ -1,4 +1,4 @@
-// Learn Physics 3D engine: one WebGL scene (wooden diorama, studio lighting) shared by every view.
+// Cubiphy 3D engine: one WebGL scene (wooden diorama, studio lighting) shared by every view.
 // React mounts it into a container and drives it through a small API; the engine never touches React state.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';

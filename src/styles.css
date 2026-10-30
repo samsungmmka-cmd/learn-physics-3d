@@ -36,7 +36,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .wordmark h1{font-size:40px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:.95}
 .wordmark h1 em{font-style:normal;color:var(--accent)}
 .tag{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.32em;color:var(--muted);text-transform:uppercase;margin-top:6px}
-html:is([lang="si"],[lang="ta"]) .tag{letter-spacing:.08em}
 .hdr .sp{flex:1}
 .hereNow{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;color:var(--muted);border:1px solid var(--line);background:var(--card);padding:6px 10px;border-radius:99px}
 .hereNow i{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
@@ -371,7 +370,6 @@ body[data-view="lab"] .status{display:none}
 @media (max-width:420px){
   .hdr{gap:10px}
   .wordmark .tag{display:block;font-size:9.5px;letter-spacing:.12em;margin-top:5px;line-height:1.4}
-  html:is([lang="si"],[lang="ta"]) .wordmark .tag{letter-spacing:0;font-size:10.5px}
   .acct{max-width:38vw;padding:5px 10px}
 }
 @media (max-width:420px){ .acct .tagT{display:none} .acct{max-width:34vw} }

@@ -54,7 +54,6 @@ export const UI={
  yourInst:{si:'ඔබේ උපකරණය',en:'Your instrument'},
 };
 Object.assign(UI,{
- tagline:{si:'මැනීම · නිරීක්ෂණය · සටහන් කිරීම · බෙදාගැනීම',en:'Measure · Observe · Record · Share'},
  navHome:{si:'මුල් පිටුව',en:'Home'}, navList:{si:'පරීක්ෂණ',en:'Practicals'}, navLab:{si:'විද්‍යාගාරය',en:'Lab'}, navComm:{si:'ප්‍රජාව',en:'Community'}, navLang:{si:'භාෂාව',en:'Language'},
  stLabel:{si:'අවසන් කළ පරීක්ෂණ',en:'Practicals completed'},
  hPrac:{si:'පරීක්ෂණ',en:'Practicals'}, seeAll:{si:'සියල්ල බලන්න',en:'See all 42'},

@@ -1,6 +1,6 @@
-# Learn Physics Lab
+# Cubiphy
 
-Learn physics practical by using 3D.
+*Measure · Observe · Record · Share*: physics practicals in 3D.
 
 Interactive 3D practicals for G.C.E. (A/L) Physics, following the NIE *Practical Handbook*, in **Sinhala and English**, with a class community for students and teachers.
 
