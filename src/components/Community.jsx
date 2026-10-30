@@ -434,7 +434,7 @@ export default function Community() {
     <div className="comm-page">
       <div className="rowh">
         <h2 className="sec-h">{u('navComm')}</h2>
-        {comm.uid ? <span className="row"><span className="muted">{comm.me?.name || comm.me?.email}{comm.teacher ? ` · ${u('teacher')}` : ''}</span><button type="button" className="link" onClick={async () => { if (await confirm({ title: u('cfSignOutT'), message: u('cfSignOutM'), ok: u('signOut'), danger: true })) comm.signOut(); }}>{u('signOut')}</button></span> : null}
+        {/* name and sign out live in the profile menu (avatar, top right) */}
       </div>
       {needName ? (
         <form className="card row" onSubmit={async (e) => { e.preventDefault(); if (nm.trim() && await confirm({ title: u('cfNameT'), quote: nm.trim(), ok: u('saveName') })) comm.rename(nm.trim().slice(0, 60)); }}>
