@@ -63,12 +63,26 @@ html{-webkit-tap-highlight-color:transparent}
 .nav > button{border:1px solid transparent;background:none;border-radius:14px;padding:7px 2px;display:grid;justify-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--ink2);cursor:pointer}
 .nav > button svg{width:26px;height:26px}
 .nav > button[aria-current="page"]{background:var(--card);border-color:var(--line);color:var(--accent);box-shadow:var(--shadow)}
-/* phones/tablets: icon-only bottom bar (labels stay available to screen readers) */
+/* phones/tablets: bottom bar with the label under each icon; the current page is shown by colour only */
 @media (max-width:899.98px){
-  .nav > button{padding:10px 2px;place-content:center}
-  .nav > button svg{width:27px;height:27px}
-  .nav > button .nav-t{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .nav{padding-top:6px}
+  .nav > button,.nav > button[aria-current="page"],.nav .um-btn,.nav .um-btn.open,.nav .um-btn[aria-current="page"]{background:none!important;border-color:transparent!important;box-shadow:none!important}
+  .nav > button{padding:4px 2px;gap:3px;color:var(--muted)}
+  .nav > button svg{width:24px;height:24px}
+  .nav > button .nav-t{font-size:10.5px;letter-spacing:-.03em;font-weight:600;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nav > button[aria-current="page"]{color:var(--accent)}
+  .nav > button[aria-current="page"] .nav-t{font-weight:700}
+  .nav .um-btn{display:grid;justify-items:center;align-content:center;gap:3px;padding:4px 2px;color:var(--muted)}
+  .nav .um-btn .um-av .uav{width:26px!important;height:26px!important;font-size:11px!important}
+  .nav .um-btn[aria-current="page"],.nav .um-btn.open{color:var(--accent)}
+  .nav .um-btn[aria-current="page"] .uav,.nav .um-btn.open .uav{outline:2px solid var(--accent);outline-offset:1px}
+  .um-t{font-size:10.5px;letter-spacing:-.03em;font-weight:600;line-height:1.2}
+  .nav .um-btn .uav.out{background:none;border-color:transparent;box-shadow:none;color:inherit}
+  .nav .um-btn .uav.out svg{width:24px;height:24px}
+  html[lang="ta"] .nav .nav-t{font-size:10px;letter-spacing:-.01em}
+  @media (hover:hover){.nav .um-btn:hover{background:none}}
 }
+@media (min-width:900px){ .um-t{display:none} }
 @media (min-width:900px){
   .shell{padding-bottom:28px}
   .nav{position:sticky;top:10px;bottom:auto;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);grid-template-columns:repeat(5,auto);justify-content:start;padding:6px}

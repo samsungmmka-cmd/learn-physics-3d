@@ -72,6 +72,7 @@ export default function UserMenu({ go, current }) {
       <button type="button" className={`um-btn${open ? ' open' : ''}`} aria-haspopup="menu" aria-expanded={open} aria-current={current ? 'page' : undefined}
         aria-label={`${signedIn ? name : u('signInTab')}${notif.unread ? ` · ${notif.unread} ${u('pfUnread')}` : ''}`} title={signedIn ? name : u('account')} onClick={() => setOpen((v) => !v)}>
         <span className="um-av"><Avatar name={name} size={34} signedIn={signedIn} />{notif.unread ? <span className="um-dot" aria-hidden="true">{notif.unread > 9 ? '9+' : notif.unread}</span> : null}</span>
+        <span className="nav-t um-t" aria-hidden="true">{u('account')}</span>
       </button>
       {open ? (
         <div className="um-pop" role="menu" aria-label={u('account')}>
