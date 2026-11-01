@@ -1,6 +1,7 @@
 import { useT } from '../lib/i18n.jsx';
 import { useLab } from '../lib/labStore.jsx';
-import { GROUPS, LABS, PRAC } from '../data/content.js';
+import { GROUPS, PRAC } from '../data/content.js';
+import { LABS } from '../practicals/index.js';
 import { useState } from 'react';
 import { progress } from '../lib/calc.js';
 import Combobox from './Combobox.jsx';

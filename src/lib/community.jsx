@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import * as API from './api.js';
 import { useLab } from './labStore.jsx';
 import { progress } from './calc.js';
-import { LABS } from '../data/content.js';
+import { LABS } from '../practicals/index.js';
 
 const Ctx = createContext(null);
 const POLL_MS = 30000;

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useT } from '../../lib/i18n.jsx';
 import { useLab } from '../../lib/labStore.jsx';
 import { useCommunity } from '../../lib/community.jsx';
-import { DISC, LABS, RESULT_TXT } from '../../data/content.js';
+import { DISC, RESULT_TXT } from '../../data/content.js';
+import { LABS } from '../../practicals/index.js';
 import { fmt, freshLab, measMeans, myShare } from '../../lib/calc.js';
 import { useConfirm } from '../Confirm.jsx';
 

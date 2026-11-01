@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useT } from '../../lib/i18n.jsx';
 import { useLab } from '../../lib/labStore.jsx';
-import { LABS, UI } from '../../data/content.js';
+import { UI } from '../../data/content.js';
+import { LABS } from '../../practicals/index.js';
 import { getEngine } from '../../engine/engine.js';
 
 export default function Apparatus() {

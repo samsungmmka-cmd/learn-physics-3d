@@ -3,7 +3,7 @@ import { useT } from './lib/i18n.jsx';
 import { useLab } from './lib/labStore.jsx';
 import { useCommunity } from './lib/community.jsx';
 import { fmtDate } from './lib/dates.js';
-import { LABS } from './data/content.js';
+import { LABS } from './practicals/index.js';
 import { progress } from './lib/calc.js';
 import Home from './components/Home.jsx';
 import PracticalList from './components/PracticalList.jsx';

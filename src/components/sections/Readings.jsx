@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useT } from '../../lib/i18n.jsx';
 import { useLab } from '../../lib/labStore.jsx';
-import { LABS } from '../../data/content.js';
+import { LABS } from '../../practicals/index.js';
+import { hasCorr, instrument } from '../../instruments/index.js';
 import { fmt, measMeans } from '../../lib/calc.js';
 
 const ROMAN = ['(i)', '(ii)', '(iii)', '(iv)', '(v)', '(vi)'];
@@ -56,6 +57,15 @@ function CalcCard({ c, mm, ls, ready }) {
   );
 }
 
+// Summary of the setup step under the least count, e.g. " · Zero error = 0.3 mm (subtract)".
+function setupLine(lab, ls, u) {
+  const P = instrument(lab.inst);
+  if (P.setup === 'level') return ` · ${u('levelled')} ✓`;
+  if (P.setup === 'init') return ` · ${u('init')} = ${fmt(ls.S0rec, 2)} mm`;
+  if (P.setup === 'zero') return ` · ${u('zero')} = ${fmt(Math.abs(ls.e), P.zeroDp)} mm (${ls.e > 0 ? u('subtract') : u('add')})`;
+  return '';
+}
+
 export default function Readings() {
   const { L, u } = useT();
   const { st, update } = useLab();
@@ -65,18 +75,19 @@ export default function Readings() {
   const mm = measMeans(ls, id);
   return (
     <>
-      <p style={{ fontSize: 13.5 }}>{u('lc')} = {lab.lcAns} mm · {lab.inst === 'travel' ? `${u('levelled')} ✓` : lab.inst === 'sphero' ? `${u('init')} = ${fmt(ls.S0rec, 2)} mm` : `${u('zero')} = ${fmt(Math.abs(ls.e), lab.inst === 'micro' ? 2 : 1)} mm (${ls.e > 0 ? u('subtract') : u('add')})`}</p>
+      <p style={{ fontSize: 13.5 }}>{u('lc')} = {lab.lcAns} mm{setupLine(lab, ls, u)}</p>
       {lab.meas.some((x) => x.n > 1 && !x.noMean) ? <p style={{ fontSize: 13, color: 'var(--muted)' }}>{u('enterMeans')}</p> : null}
       {Object.entries(tables).map(([tid, rows]) => {
         const nc = Math.max(...rows.map((r) => r.n)); const heads = (rows[0].heads || ROMAN).slice(0, nc); const hasMean = rows.some((r) => r.n > 1 && !r.noMean);
         return (
           <div className="tbl-wrap" key={tid}><table>
             <caption>{/^\d/.test(tid) ? `${tid} ${u('table')}` : L(rows[0].label)}</caption>
-            <thead><tr><th>{lab.inst === 'travel' ? u('reading') : u('corr')}</th>{heads.map((h) => <th key={h}>{h}</th>)}{hasMean ? <th>{u('mean')}</th> : null}</tr></thead>
+            <thead><tr><th>{hasCorr(lab) ? u('corr') : u('reading')}</th>{heads.map((h) => <th key={h}>{h}</th>)}{hasMean ? <th>{u('mean')}</th> : null}</tr></thead>
             <tbody>
               {rows.map((r) => {
                 const rec = ls.rec[r.key] || [], d = r.dp || lab.dp, full = rec.length >= r.n;
-                const tol = (r.rig === 'caliper' && lab.unit === 'mm' ? 0.1 : 0.01) * 0.6 + 1e-9;
+                const res = instrument(r.rig || lab.inst).resolution; // mm
+                const tol = (lab.unit === 'cm' ? res / 10 : res) * 0.6 + 1e-9;
                 return (
                   <tr key={r.key}>
                     <td className="lab">{L(r.label)}</td>

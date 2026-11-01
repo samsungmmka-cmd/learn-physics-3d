@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { LABS } from '../data/content.js';
+import { LABS } from '../practicals/index.js';
 import { freshLab } from './calc.js';
 
 const KEY = 'quanta-practicals-v1';

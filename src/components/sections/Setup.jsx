@@ -1,20 +1,21 @@
 import { useState } from 'react';
 import { useT } from '../../lib/i18n.jsx';
 import { useLab } from '../../lib/labStore.jsx';
-import { LABS } from '../../data/content.js';
+import { LABS } from '../../practicals/index.js';
+import { instrument } from '../../instruments/index.js';
 import { fmt } from '../../lib/calc.js';
 import { getEngine } from '../../engine/engine.js';
 
 export function LcCard() {
   const { L, u, lang } = useT();
   const { st, update } = useLab();
-  const lab = LABS[st.cur], ls = st.labs[st.cur];
+  const lab = LABS[st.cur], ls = st.labs[st.cur], P = instrument(lab.inst);
   const [v, setV] = useState('');
   const [bad, setBad] = useState(false);
   const turnOne = () => {
     const eng = getEngine(); if (!eng.rig) return;
-    const step = lab.inst === 'micro' ? 0.5 : 1; const val = eng.rig.value();
-    eng.animateTo(lab.inst === 'micro' ? Math.min(24, val + step) : Math.min(10, val + step), 1.6);
+    const { step, max } = P.turnOne; const val = eng.rig.value();
+    eng.animateTo(Math.min(max, val + step), 1.6);
   };
   const check = () => {
     if (Math.abs(parseFloat(v) - lab.lcAns) < 1e-6) update((n) => { n.labs[n.cur].lc = true; });
@@ -24,7 +25,7 @@ export function LcCard() {
     <div className={`card${ls.lc ? ' done' : ''}`}>
       <h3>{u('lc')}{ls.lc ? <span className="st">✓</span> : null}</h3>
       <p>{L(lab.lcQ)}</p>
-      {lab.inst === 'micro' || lab.inst === 'sphero' ? <div className="row"><button type="button" className="btn ghost sm" onClick={turnOne}>{u('turnOne')}</button></div> : null}
+      {P.turnOne ? <div className="row"><button type="button" className="btn ghost sm" onClick={turnOne}>{u('turnOne')}</button></div> : null}
       <div className="row">
         <input className={`num${ls.lc ? ' ok' : ''}`} inputMode="decimal" aria-label={u('lc')} value={ls.lc ? lab.lcAns : v} disabled={ls.lc}
           onChange={(e) => { setV(e.target.value); setBad(false); }} onKeyDown={(e) => { if (e.key === 'Enter') check(); }} />
@@ -39,7 +40,7 @@ export function LcCard() {
 export function ZeroCard() {
   const { L, u, lang } = useT();
   const { st, update } = useLab();
-  const lab = LABS[st.cur], ls = st.labs[st.cur], sph = lab.inst === 'sphero';
+  const lab = LABS[st.cur], ls = st.labs[st.cur], P = instrument(lab.inst), sph = P.setup === 'init';
   const [v, setV] = useState('');
   const [side, setSide] = useState(null);
   const [fb, setFb] = useState(null);
@@ -53,13 +54,14 @@ export function ZeroCard() {
       else setFb(['bad', u('wrongRead')]);
       return;
     }
-    const tol = lab.inst === 'micro' ? 0.0051 : 0.051;
+    const tol = P.zeroTol;
     if (!(Math.abs(x - Math.abs(ls.e)) <= tol)) { setFb(['bad', u('wrongRead')]); return; }
     if (!side || (side === 'sub') !== ls.e > 0) { setFb(['bad', L({ si: 'විශාලත්වය නිවැරදියි. ශුන්‍යය පිහිටා ඇත්තේ කුමන පැත්තේ දැයි නැවත සලකා බලන්න.', en: 'The size is right. Look again at which side of the zero line the scale zero sits.', ta: 'பருமன் சரி. அளவுகோலின் பூச்சியம் பூச்சியக் கோட்டின் எப்பக்கத்தில் உள்ளது என மீண்டும் பார்க்கவும்.' })]); return; }
     update((n) => { n.labs[n.cur].zero = true; });
   };
-  if (lab.inst === 'travel') {
-    // Practical 4 has no zero error: the setup step is levelling the microscope with the spirit level.
+  if (P.setup === 'none') return null;
+  if (P.setup === 'level') {
+    // No zero error: the setup step is levelling the instrument (e.g. the travelling microscope's spirit level).
     const checkLevel = () => { const R = eng.rig; if (R && R.mode === 'level' && R.contact()) update((n) => { n.labs[n.cur].zero = true; }); else setFb(['bad', u('notLevelMsg')]); };
     return (
       <div className={`card${ls.zero ? ' done' : ''}`}>
@@ -91,7 +93,7 @@ export function ZeroCard() {
   return (
     <div className={`card${ls.zero ? ' done' : ''}`}>
       <h3>{u('zero')}{ls.zero ? <span className="st">✓</span> : null}</h3>
-      {ls.zero ? <p className="fb good">{u('zero')} = {fmt(Math.abs(ls.e), lab.inst === 'micro' ? 2 : 1)} mm · {ls.e > 0 ? u('subtract') : u('add')}</p> : (
+      {ls.zero ? <p className="fb good">{u('zero')} = {fmt(Math.abs(ls.e), P.zeroDp)} mm · {ls.e > 0 ? u('subtract') : u('add')}</p> : (
         <>
           <p>{L(lab.zeroQ)}</p>
           <div className="row"><span>{u('magnitude')}</span><input className="num" inputMode="decimal" aria-label={u('magnitude')} value={v} onChange={(e) => setV(e.target.value)} /><span className="unit">mm</span></div>
