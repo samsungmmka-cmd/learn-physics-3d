@@ -231,6 +231,10 @@ Object.assign(UI, {
   edgeR: { si: 'දකුණු දාරය', en: 'right edge', ta: 'வலது விளிம்பு' },
   edgeT: { si: 'ඉහළ දාරය', en: 'top edge', ta: 'மேல் விளிம்பு' },
   edgeB: { si: 'පහළ දාරය', en: 'bottom edge', ta: 'கீழ் விளிம்பு' },
+  // Practical 5: half-metre rule index on the drawing
+  onC: { si: 'දර්ශකය C මත', en: 'Index on C', ta: 'சுட்டி C இல்' },
+  offC: { si: 'දර්ශකය C මත නැත', en: 'Index not on C', ta: 'சுட்டி C இல் இல்லை' },
+  notOnC: { si: 'කෝදුවේ දර්ශකය තවම C ලක්ෂ්‍යය මත නැත. එය C දක්වා ගෙන එන්න.', en: 'The rule’s index isn’t on point C yet. Slide it to C.', ta: 'அளவுகோலின் சுட்டி இன்னும் C புள்ளியில் இல்லை. அதை C வரை நகர்த்தவும்.' },
   enrollQ: { si: 'මෙම පැවරුම කිරීමට සූදානම්ද?', en: 'Ready to take this on?', ta: 'இவ்வொப்படையைச் செய்யத் தயாரா?' },
   enrollHelp: { si: 'ලියාපදිංචි වූ පසු, අවසන් වූ විට සම්පූර්ණ ලෙස සලකුණු කර ඔබේ ගුරුවරයාට සටහනක් තැබිය හැක.', en: 'Enroll, then mark it complete when you’re done and leave a note for your teacher.', ta: 'பதிவு செய்து, முடிந்ததும் முடிந்ததாகக் குறித்து உங்கள் ஆசிரியருக்குக் குறிப்பு விடலாம்.' },
 });

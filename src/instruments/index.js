@@ -8,8 +8,9 @@ import caliper from './caliper/index.js';
 import micro from './micro/index.js';
 import sphero from './sphero/index.js';
 import travel from './travel/index.js';
+import forceBoard from './forceBoard/index.js';
 
-export const INSTRUMENTS = { caliper, micro, sphero, travel };
+export const INSTRUMENTS = { caliper, micro, sphero, travel, forceBoard };
 
 // Defaults for anything a profile leaves out.
 const BASE = { setup: 'none', zeroTol: 0.051, zeroDp: 1, resolution: 0.01, turnOne: null, theoryDemo: false, offMsg: null, thumb: { mode: 'show' } };

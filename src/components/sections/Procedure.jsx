@@ -73,7 +73,9 @@ export default function Procedure() {
   const setLab = (fn) => update((n) => fn(n.labs[n.cur]));
 
   const P = instrument(lab.inst), corrShown = hasCorr(lab);
-  const { MeasNote } = instrumentUI(lab.inst);
+  const { MeasNote, PreMeas } = instrumentUI(lab.inst);
+  // Some practicals need a step before each activity's readings (e.g. drawing the parallelogram of forces).
+  const preLocked = !!(P.preMeas && !P.preMeas.done(ls, ls.act));
   const offMsg = P.offMsg ? u(P.offMsg) : m.mode === 'free' ? u('notMarks') : u('notContact');
   const hint = () => { eng.setHint(true); setFb(['info', eng.rig && eng.rig.contact() ? eng.rig.hintText(lang) : offMsg]); };
   const record = () => {
@@ -124,7 +126,8 @@ export default function Procedure() {
           <p className={`fb ${pe <= 1 ? 'good' : 'bad'}`}>{u('pctErr')} = 0.01 / ({ls.N} × ≈0.1) × 100 ≈ {fmt(pe, 1)}%{pe > 1 ? ` · ${u('pctBad')}` : ''}</p>
         </div>
       ) : null}
-      {recs.length < m.n ? (
+      {PreMeas ? <PreMeas key={ls.act} act={ls.act} /> : null}
+      {preLocked ? <p className="insight">{u('lockedSetup')}</p> : recs.length < m.n ? (
         <div className="card">
           <h3>{u('readingOf')}: {L(m.label)} <span className="st" style={{ color: 'var(--accent)' }}>{head(m, recs.length)}</span></h3>
           {m.mode === 'free' ? <PairNote pair={['AB', 'BC', 'CA'][recs.length % 3]} lang={lang} /> : null}

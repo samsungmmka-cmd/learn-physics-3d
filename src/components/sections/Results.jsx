@@ -28,11 +28,11 @@ export default function Results() {
   };
   return (
     <>
-      <div><h2>{u('result')}</h2><p style={{ color: 'var(--muted)', fontSize: 13.5 }}>{L(RESULT_TXT)}</p></div>
+      <div><h2>{u('result')}</h2><p style={{ color: 'var(--muted)', fontSize: 13.5 }}>{L(lab.resultTxt || RESULT_TXT)}</p></div>
       <div className="tbl-wrap"><table><tbody>
         {rows.map(([a, b, bold], i) => <tr key={i}><td className="lab">{bold ? <b>{a}</b> : a}</td><td>{b === null ? <span style={{ color: 'var(--muted)', fontFamily: 'var(--f-body)' }}>{u('notYet')}</span> : bold ? <b>{b}</b> : b}</td></tr>)}
       </tbody></table></div>
-      <div><h2>{u('discussion')}</h2><p style={{ fontSize: 13.5 }}>{L(DISC)}</p></div>
+      <div><h2>{u('discussion')}</h2><p style={{ fontSize: 13.5 }}>{L(lab.disc || DISC)}</p></div>
       <textarea aria-label={u('discussion')} placeholder={u('notesPh')} defaultValue={ls.notes || ''} onChange={(e) => { const v = e.target.value; update((n) => { n.labs[n.cur].notes = v; }); }} />
       <p style={{ fontSize: 11.5, color: 'var(--muted)' }}>{comm.uid ? u('synced') : u('saved')}</p>
       <div className="extra"><span className="lbl-s" style={{ color: 'var(--accent-2)' }}>{u('note')}</span>{L(lab.note)}</div>

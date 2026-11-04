@@ -28,7 +28,8 @@ if (!list.length) { console.error('No matching practicals.'); process.exit(1); }
 
 // ---------- lab states ----------
 const fresh = (P) => ({ lc: false, zero: instrument(P.lab.inst).setup === 'none', e: 0, S0: 0, S0rec: null, act: 0, mk: null, rec: {}, means: {}, calc: {}, N: 20, notes: '', ...(P.start ? P.start({ pick: (l) => l[0], rand: (x, y) => (x + y) / 2 }) : {}) });
-const ready = (P) => { const s = fresh(P); s.lc = true; s.zero = true; if (instrument(P.lab.inst).setup === 'init') s.S0rec = s.S0; return s; };
+// With a step before the readings (preMeas, e.g. drawing the parallelogram of forces), use the profile's finished sample.
+const ready = (P) => { const s = fresh(P); s.lc = true; s.zero = true; const I = instrument(P.lab.inst); if (I.setup === 'init') s.S0rec = s.S0; if (I.preMeas && I.preMeas.sample) s.pre = I.preMeas.sample(s, P.lab); return s; };
 const full = (P) => {
   const s = ready(P);
   for (const m of P.lab.meas) {
@@ -48,6 +49,7 @@ for (const P of list) {
   const NN = pad2(P.id);
   for (let sec = 0; sec < 5; sec++) pages.push({ name: `p${NN}-s${sec + 1}-start`, st: { view: 'lab', cur: P.id, sec, labs: labsWith(P, fresh(P)) }, sel: '.labgrid' });
   pages.push({ name: `p${NN}-s3-setup`, st: { view: 'lab', cur: P.id, sec: 2, labs: labsWith(P, { ...fresh(P), lc: true }) }, sel: '.labgrid' });
+  if (instrument(P.lab.inst).preMeas) P.lab.acts.forEach((x, a) => pages.push({ name: `p${NN}-s3-pre${a + 1}`, st: { view: 'lab', cur: P.id, sec: 2, labs: labsWith(P, { ...ready(P), act: a, pre: a ? { 0: ready(P).pre[0] } : {} }) }, sel: '.labgrid' }));
   for (const m of P.lab.meas) pages.push({ name: `p${NN}-s3-${m.key}`, st: { view: 'lab', cur: P.id, sec: 2, labs: labsWith(P, { ...ready(P), act: m.act, mk: m.key }) }, sel: '.labgrid', rig: true });
   for (let sec = 3; sec < 5; sec++) pages.push({ name: `p${NN}-s${sec + 1}-done`, st: { view: 'lab', cur: P.id, sec, labs: labsWith(P, full(P)) }, sel: '.labgrid' });
 }

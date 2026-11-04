@@ -36,6 +36,10 @@ export default {
   calcs: [
     { act: 0, key: 'Lm', unit: 'mm', label: { si: 'TODO', en: 'Mean length' }, f: 'L = (L₁ + L₂ + L₃) / 3', fn: (m) => m.L },
   ],
+  // Optional per calculation: tolAbs (accepted difference, e.g. for percentages, instead of 1.5 %),
+  // work(means, labState) → text shown by the "Working" button.
+  // Optional: info(labState) → { si, en, ta } line on the Readings page (e.g. the scale used);
+  // resultTxt / disc: the handbook's own Results and Discussion text, when it differs from the usual one.
   // Note under the results.
   note: { si: 'TODO', en: 'TODO' },
 };

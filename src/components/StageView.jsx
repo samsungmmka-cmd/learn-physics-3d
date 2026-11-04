@@ -94,11 +94,11 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
             <div className="lh"><span>{u('loupe')}</span><button type="button" onClick={() => setLoupeMin(!loupeMin)}>{loupeMin ? u('show') : u('hide')}</button></div>
             <canvas ref={loupeRef} />
           </div>
-          <div className="ctrlbar">
+          {controls.length ? <div className="ctrlbar">
             <span className="cap">{L(cset.label)}</span>
             <div className="hold">{controls.filter((c) => !c.ratchet).map((c) => <HoldButton key={c.t} c={c} label={c.t} />)}</div>
             {controls.filter((c) => c.ratchet).map((c) => <HoldButton key="r" c={c} label={u('ratchet')} wide />)}
-          </div>
+          </div> : null}
         </div>
       ) : null}
     </div>

@@ -8,8 +8,9 @@ import p01 from './p01-vernier-caliper/index.js';
 import p02 from './p02-micrometer-screw-gauge/index.js';
 import p03 from './p03-spherometer/index.js';
 import p04 from './p04-travelling-microscope/index.js';
+import p05 from './p05-verifying-the-parallelogram-law/index.js';
 
-export const PRACTICALS = [p01, p02, p03, p04];
+export const PRACTICALS = [p01, p02, p03, p04, p05];
 
 // Tamil: copy each `ta` entry onto the matching {si, en} object in the lab content.
 const at = (root, path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), root);

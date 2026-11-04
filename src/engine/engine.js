@@ -311,7 +311,9 @@ export function createEngine() {
     const items = [];
     for (const l of labels) {
       l.target.getWorldPosition(_v); _v.project(camera);
-      const vis = _v.x > -1.05 && _v.x < 1.05 && _v.y > -1.05 && _v.y < 1.05 && _v.z < 1;
+      // hidden when off screen, or when its part is hidden (a rig can show different scenes for different steps)
+      let shown = true; for (let o = l.target; o; o = o.parent) if (o.visible === false) { shown = false; break; }
+      const vis = shown && _v.x > -1.05 && _v.x < 1.05 && _v.y > -1.05 && _v.y < 1.05 && _v.z < 1;
       l.el.classList.toggle('hidden', !vis); l.g.style.display = vis ? '' : 'none';
       if (!vis) continue;
       const tx = ((_v.x + 1) / 2) * w, ty = ((1 - _v.y) / 2) * h;

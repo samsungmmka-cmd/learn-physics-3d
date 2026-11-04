@@ -27,6 +27,8 @@ export function progress(st, id) {
     if (m.n > 1 && !m.noMean) { tot++; if (ls.means[m.key] && ls.means[m.key].ok) done++; }
   });
   lab.calcs.forEach((c) => { tot++; if (ls.calc[c.key] && ls.calc[c.key].ok) done++; });
+  const pre = instrument(lab.inst).preMeas;
+  if (pre) lab.acts.forEach((a, i) => { tot++; if (pre.done(ls, i)) done++; });
   return done / tot;
 }
 

@@ -11,7 +11,7 @@ src/instruments/
     rig.js          the 3D model, built from code with three.js, plus the rig contract below
     loupe.js        draws the magnified scale (2D canvas)
     index.js        the profile: how the app treats readings taken with this instrument
-    ui.jsx          optional: TheoryFig, MeasNote
+    ui.jsx          optional: TheoryFig, MeasNote, PreMeas
 ```
 
 Start a new one with `npm run new:instrument -- <type>`. It copies `_template/`, a working
@@ -34,6 +34,7 @@ example (a metre rule with a sliding marker) that already meets the contract, an
 | `measHud(label, m, i)` | Optional: text on the 3D view while measuring. |
 | `offMsg` | Optional UI key shown when the student records without contact. |
 | `thumb` | `place()` spec for the home-page picture. |
+| `preMeas` | Optional: a step each activity needs before its readings (e.g. drawing the parallelogram of forces). `{ done(ls, act) → bool, sample(ls, lab) → ls.pre }`; the card itself is `PreMeas({ act })` in `ui.jsx`. Readings stay locked until `done`; progress counts it; the smoke test uses `sample` as a finished state. |
 
 ## Rig contract (`rig.js`)
 
