@@ -234,6 +234,11 @@ Object.assign(UI, {
   // Practical 5: half-metre rule index on the drawing
   onC: { si: 'දර්ශකය C මත', en: 'Index on C', ta: 'சுட்டி C இல்' },
   offC: { si: 'දර්ශකය C මත නැත', en: 'Index not on C', ta: 'சுட்டி C இல் இல்லை' },
+  loadedOk: { si: 'තැටි පූරණය කර ඇත', en: 'Pans loaded', ta: 'தட்டுகள் நிரப்பப்பட்டன' },
+  loadPans: { si: 'තැටිවලට භාර දමන්න', en: 'Load the pans', ta: 'தட்டுகளில் நிறைகளை இடவும்' },
+  onString: { si: 'තන්තුව යටින්', en: 'Under the string', ta: 'இழையின் கீழ்' },
+  nearString: { si: 'තන්තුවට ළඟයි: දර්පණයේ ප්‍රතිබිම්බය පෙළගස්වන්න', en: 'Close: line up the image in the mirror', ta: 'அருகில்: ஆடியில் விம்பத்தை ஒழுங்குபடுத்தவும்' },
+  offString: { si: 'තන්තුව යටින් නොවේ', en: 'Not under a string', ta: 'இழையின் கீழ் இல்லை' },
   notOnC: { si: 'කෝදුවේ දර්ශකය තවම C ලක්ෂ්‍යය මත නැත. එය C දක්වා ගෙන එන්න.', en: 'The rule’s index isn’t on point C yet. Slide it to C.', ta: 'அளவுகோலின் சுட்டி இன்னும் C புள்ளியில் இல்லை. அதை C வரை நகர்த்தவும்.' },
   enrollQ: { si: 'මෙම පැවරුම කිරීමට සූදානම්ද?', en: 'Ready to take this on?', ta: 'இவ்வொப்படையைச் செய்யத் தயாரா?' },
   enrollHelp: { si: 'ලියාපදිංචි වූ පසු, අවසන් වූ විට සම්පූර්ණ ලෙස සලකුණු කර ඔබේ ගුරුවරයාට සටහනක් තැබිය හැක.', en: 'Enroll, then mark it complete when you’re done and leave a note for your teacher.', ta: 'பதிவு செய்து, முடிந்ததும் முடிந்ததாகக் குறித்து உங்கள் ஆசிரியருக்குக் குறிப்பு விடலாம்.' },

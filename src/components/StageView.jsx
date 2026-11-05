@@ -37,7 +37,10 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
   const [status, setStatus] = useState(null);
   const [loupeMin, setLoupeMin] = useState(false);
   const eng = getEngine();
-  const specKey = JSON.stringify(spec);
+  // place.live = what changes as the student works in 3D; it goes to the rig without rebuilding the scene.
+  const live = spec.place && spec.place.live;
+  const specKey = JSON.stringify(live ? { ...spec, place: { ...spec.place, live: null } } : spec);
+  const liveKey = JSON.stringify(live || null);
   // Show / hide part labels: one setting for every 3D view, remembered on this device.
   const [labelsOn, setLabelsOn] = useState(() => { try { return localStorage.getItem('lp-labels') !== '0'; } catch { return true; } });
   const toggleLabels = () => setLabelsOn((v) => { const n = !v; try { localStorage.setItem('lp-labels', n ? '1' : '0'); } catch { /* private mode */ } return n; });
@@ -51,6 +54,7 @@ export default function StageView({ mode, spec, hud, sub, cta, className = '' })
   }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { eng.setMode(mode); eng.show(spec); }, [specKey, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (live) eng.live(live); }, [liveKey, specKey, mode]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { eng.setLoupe(mode === 'lab' && !loupeMin ? loupeRef.current : null); }, [mode, loupeMin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

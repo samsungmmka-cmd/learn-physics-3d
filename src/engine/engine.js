@@ -189,7 +189,11 @@ export function createEngine() {
   let labG = null, camHome = null, camAnim = null, anim = null, lastTouch = 0, lastSpec = null;
   if (E.ok) { base = buildBase(); scene.add(base); labG = new THREE.Group(); scene.add(labG); }
   // Everything a rig module may use to build itself (see src/instruments/README.md).
-  const kit = { DEG, rand, fmt, mats, mesh, extr, lathe, anchor, steadyAnchor, ctex, engr, scaleMat, clearGroup, camera, root, tick };
+  // Rigs can tell the page what the student did in 3D (e.g. put a mass on a pan): kit.emit(name, data) → E.on(fn).
+  const listeners = new Set();
+  const emit = (name, data) => listeners.forEach((fn) => { try { fn(name, data); } catch (err) { /* a page handler failed */ } });
+  E.on = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
+  const kit = { DEG, rand, fmt, mats, mesh, extr, lathe, anchor, steadyAnchor, ctex, engr, scaleMat, clearGroup, camera, root, tick, emit };
   const getRig = (t) => RIGS[t] || (RIGS[t] = instrument(t).rig(kit));
   function useRig(t) {
     const R = getRig(t);
@@ -278,7 +282,11 @@ export function createEngine() {
   }
   E.resetLabels = () => pins.clear();
   E.labelsOn = true;
-  E.setLabelsVisible = (on) => { E.labelsOn = !!on; coLayer.classList.toggle('lbl-off', !on); };
+  // A rig can ask for the labels to step aside while the student works on it (R.quietLabels() → true),
+  // e.g. while marking a paper that fills the view; the student's own show/hide setting comes back after.
+  let quiet = false;
+  const applyLabels = () => coLayer.classList.toggle('lbl-off', !E.labelsOn || quiet);
+  E.setLabelsVisible = (on) => { E.labelsOn = !!on; applyLabels(); };
   E.resetAll = () => { pins.clear(); E.resetView(); };
   function clearLabels() { labels.splice(0).forEach((l) => { l.el.remove(); l.g.remove(); }); coIdx = 0; }
   E.highlight = (key) => labels.forEach((l) => { const on = key != null && l.key === key; l.el.classList.toggle('hl', on); l.g.classList.toggle('hl', on); });
@@ -474,6 +482,9 @@ export function createEngine() {
     const end = () => { drag = null; };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
   }
+  // Live state for the rig that changes as the student works (loads, marks…) without rebuilding the scene
+  // or moving the camera: StageView passes spec.place.live here whenever it changes.
+  E.live = (live) => { if (E.rig && E.rig.live) { E.rig.live(live || {}); E.rig.dirty = true; } };
   E.setLoupe = (cv) => { E.loupeCanvas = cv; if (cv) bindLoupe(cv); if (E.rig) E.rig.dirty = true; };
   E.setHint = (b) => { E.loupeHint = b; if (E.rig) { if (b && E.rig.onHint) E.rig.onHint(); E.rig.dirty = true; } };
   E.animateTo = (to, dur = 1.2) => { if (E.rig) anim = { from: E.rig.value(), to, t: 0, dur }; };
@@ -503,16 +514,36 @@ export function createEngine() {
 
   /* ---------- pointer drag on the instrument ---------- */
   if (E.ok) {
-    const ray = new THREE.Raycaster(), p2 = new THREE.Vector2(); let drag = null;
+    const ray = new THREE.Raycaster(), p2 = new THREE.Vector2(); let drag = null, pick = null;
     const cv = renderer.domElement;
+    const aim = (e) => { const r = cv.getBoundingClientRect(); p2.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(p2, camera); };
+    const shown = (o) => { for (let q = o; q; q = q.parent) if (q.visible === false) return false; return true; };
+    // Rigs with pickTargets + onPointer(phase, info) handle their own clicks, drags and hover (phases: down, move, up, hover).
+    const info = (e, start) => {
+      const R = E.rig; const hits = R.pickTargets ? ray.intersectObjects(R.pickTargets().filter(shown), true) : [];
+      return { ray: ray.ray, hit: hits[0] || null, hits, x: e.clientX, y: e.clientY, dx: start ? e.clientX - start.x : 0, dy: start ? e.clientY - start.y : 0 };
+    };
     cv.addEventListener('pointerdown', (e) => {
       lastTouch = performance.now();
-      if (!E.rig || !E.rig.dragTargets || E.mode !== 'lab') return;
-      const r = cv.getBoundingClientRect(); p2.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(p2, camera);
-      if (ray.intersectObjects(E.rig.dragTargets, true).length) { drag = { x: e.clientX, y: e.clientY, g: E.rig.value() }; controls.enabled = false; cv.setPointerCapture(e.pointerId); }
+      if (!E.rig || E.mode !== 'lab') return;
+      aim(e); const R = E.rig;
+      if (R.onPointer && R.pickTargets) {
+        const i = info(e); if (i.hit && R.onPointer('down', i)) { pick = { x: e.clientX, y: e.clientY }; controls.enabled = false; cv.setPointerCapture(e.pointerId); R.dirty = true; return; }
+      }
+      if (!R.dragTargets) return;
+      if (ray.intersectObjects(R.dragTargets, true).length) { drag = { x: e.clientX, y: e.clientY, g: R.value() }; controls.enabled = false; cv.setPointerCapture(e.pointerId); }
     });
-    cv.addEventListener('pointermove', (e) => { if (drag) E.rig.drag(e.clientX - drag.x, e.clientY - drag.y, drag); });
-    const end = () => { if (drag) { drag = null; controls.enabled = true; } };
+    cv.addEventListener('pointermove', (e) => {
+      const R = E.rig; if (!R) return;
+      if (drag) { R.drag(e.clientX - drag.x, e.clientY - drag.y, drag); return; }
+      if (!R.onPointer || E.mode !== 'lab') return;
+      aim(e); const i = info(e, pick); R.onPointer(pick ? 'move' : 'hover', i); R.dirty = true;
+      cv.style.cursor = R.cursor ? R.cursor(i) || '' : '';
+    });
+    const end = (e) => {
+      if (drag) { drag = null; controls.enabled = true; }
+      if (pick) { const R = E.rig; if (R && R.onPointer) { aim(e); R.onPointer('up', info(e, pick)); R.dirty = true; } pick = null; controls.enabled = true; }
+    };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
   }
   let actx = null;
@@ -540,6 +571,7 @@ export function createEngine() {
     if (R) {
       if (anim) { anim.t += dt; const k = Math.min(1, anim.t / anim.dur); const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; R.set(anim.from + (anim.to - anim.from) * e); if (k >= 1) anim = null; }
       R.step(dt); if (R.dirty) { drawLoupe(); R.dirty = false; }
+      const q = E.mode === 'lab' && !!(R.quietLabels && R.quietLabels()); if (q !== quiet) { quiet = q; applyLabels(); }
       const s = E.mode === 'lab' && R.status ? R.status() : null; const k = s ? s.join('|') : '';
       if (k !== E.lastStatus) { E.lastStatus = k; if (E.onStatus) E.onStatus(s); }
     }
@@ -553,7 +585,7 @@ export function createEngine() {
   }
   if (E.ok) loop();
   E.dispose = () => cancelAnimationFrame(raf);
-  E.root = root;
+  E.root = root; E.camera = camera; // camera exposed for tests (?debug)
   return E;
 }
 

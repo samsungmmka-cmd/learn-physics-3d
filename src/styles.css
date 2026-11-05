@@ -713,3 +713,12 @@ html:is([lang="si"],[lang="ta"]) .pk{text-transform:none;letter-spacing:0}
 .pf-tpick{align-items:flex-start}
 .pf-tpick .cbx{flex:1 1 220px}
 .res-pick{max-width:520px}
+/* force board card: pan loads and string marks */
+.fb-loads{display:grid;gap:8px}
+.fb-pan{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.fb-pan>b{grid-row:span 3;font-size:18px}
+.fb-pan.ok{border-color:#2A9A5A;background:color-mix(in srgb,#2A9A5A 8%,var(--card))}
+.fb-pan .fb-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.fb-dots{display:flex;flex-wrap:wrap;gap:8px}
+.fb-dots span{font-size:13px;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+.fb-dots span.ok{border-color:#2A9A5A;color:#2A9A5A;font-weight:700}

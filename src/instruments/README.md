@@ -66,5 +66,8 @@ Import `three` yourself (not through the kit) so the build only bundles what is 
 | `setE(e)`, `setS0(v)` | no | Called before `place()` with the zero error / start position. |
 | `squeeze` | no | Over-tightening amount; a reading can't be recorded while `> 0`. |
 | `lensAt`, `onHint` | no | Loupe interaction (see the travelling microscope). |
+| `pickTargets()`, `onPointer(phase, info)`, `cursor(info)` | no | Clicks, drags and hover on the rig's own objects: `phase` is `down` (return `true` to take the pointer), `move`, `up` or `hover`; `info` has `ray`, `hit`, `hits`, `dx`, `dy`. |
+| `live(state)` | no | Takes `place().live` (state that changes as the student works) without rebuilding the scene or moving the camera. Report the student's actions with `kit.emit(name, data)`; pages listen with `getEngine().on(fn)`. |
+| `quietLabels()` | no | `true` while part labels should step aside (e.g. while marking a paper that fills the view). |
 
 Units are millimetres throughout the rig. Practicals in cm convert at the input (`lab.unit`).
